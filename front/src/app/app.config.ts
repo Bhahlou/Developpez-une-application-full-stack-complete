@@ -1,11 +1,15 @@
-import { ApplicationConfig, importProvidersFrom, provideZonelessChangeDetection } from '@angular/core';
-import { BrowserModule } from '@angular/platform-browser';
-import { MatButtonModule } from '@angular/material/button';
-import { AppRoutingModule } from './app-routing.module';
+import {
+  ApplicationConfig,
+  provideBrowserGlobalErrorListeners,
+  provideZonelessChangeDetection,
+} from '@angular/core';
+import { provideRouter } from '@angular/router';
+import { routes } from './app.routes';
 
 export const appConfig: ApplicationConfig = {
   providers: [
+    provideBrowserGlobalErrorListeners(),
     provideZonelessChangeDetection(),
-    importProvidersFrom(BrowserModule, AppRoutingModule, MatButtonModule),
+    provideRouter(routes),
   ],
 };
