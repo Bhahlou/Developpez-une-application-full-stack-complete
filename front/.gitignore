@@ -37,6 +37,10 @@ yarn-error.log
 testem.log
 /typings
 
+# AI tooling (Claude Code skills, MCP, generated best-practices)
+.claude/
+skills-lock.json
+
 # System files
 .DS_Store
 Thumbs.db
