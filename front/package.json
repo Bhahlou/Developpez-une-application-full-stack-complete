@@ -27,6 +27,7 @@
     "@angular/build": "^22.0.4",
     "@angular/cli": "~22.0.4",
     "@angular/compiler-cli": "^22.0.3",
+    "@angular/language-service": "^22.0.4",
     "@types/node": "^24.13.2",
     "istanbul-lib-instrument": "^6.0.3",
     "jsdom": "^29.1.1",

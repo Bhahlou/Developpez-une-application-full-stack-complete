@@ -1,4 +1,5 @@
 import { Component, ChangeDetectionStrategy } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 
 @Component({
@@ -6,10 +7,6 @@ import { MatButtonModule } from '@angular/material/button';
   templateUrl: './home.component.html',
   styleUrls: ['./home.component.scss'],
   changeDetection: ChangeDetectionStrategy.Eager,
-  imports: [MatButtonModule],
+  imports: [RouterLink, MatButtonModule],
 })
-export class HomeComponent {
-  start() {
-    alert('Commencez par lire le README et à vous de jouer !');
-  }
-}
+export class HomeComponent {}

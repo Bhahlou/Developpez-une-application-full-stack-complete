@@ -1,0 +1,13 @@
+mat-toolbar {
+  border-bottom: 1px solid var(--mat-sys-outline-variant);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+
+  img {
+    height: 60px;
+    width: auto;
+  }
+}

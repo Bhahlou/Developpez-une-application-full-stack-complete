@@ -1,0 +1,63 @@
+<div class="page">
+  <button mat-icon-button class="back-button" type="button" (click)="goBack()" aria-label="Retour">
+    <mat-icon>arrow_back</mat-icon>
+  </button>
+
+  <div class="center">
+    <h1>Connexion</h1>
+
+    <form class="auth-form" (submit)="onSubmit($event)">
+      <mat-form-field appearance="outline">
+        <mat-label>Email ou nom d'utilisateur</mat-label>
+        <input
+          matInput
+          [formField]="loginForm.identifier"
+          autocomplete="username"
+          aria-label="Email ou nom d'utilisateur"
+        />
+        @if (loginForm.identifier().touched() && loginForm.identifier().invalid()) {
+          <mat-error>
+            @for (err of loginForm.identifier().errors(); track err.message) {
+              {{ err.message }}
+            }
+          </mat-error>
+        }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Mot de passe</mat-label>
+        <input
+          matInput
+          [type]="hidePassword() ? 'password' : 'text'"
+          [formField]="loginForm.password"
+          autocomplete="current-password"
+          aria-label="Mot de passe"
+        />
+        <button
+          mat-icon-button
+          matSuffix
+          type="button"
+          (click)="togglePasswordVisibility()"
+          [attr.aria-label]="hidePassword() ? 'Afficher le mot de passe' : 'Masquer le mot de passe'"
+        >
+          <mat-icon>{{ hidePassword() ? 'visibility_off' : 'visibility' }}</mat-icon>
+        </button>
+        @if (loginForm.password().touched() && loginForm.password().invalid()) {
+          <mat-error>
+            @for (err of loginForm.password().errors(); track err.message) {
+              {{ err.message }}
+            }
+          </mat-error>
+        }
+      </mat-form-field>
+
+      <button mat-raised-button color="primary" type="submit" [disabled]="loginForm().submitting()">
+        @if (loginForm().submitting()) {
+          Connexion...
+        } @else {
+          Se connecter
+        }
+      </button>
+    </form>
+  </div>
+</div>

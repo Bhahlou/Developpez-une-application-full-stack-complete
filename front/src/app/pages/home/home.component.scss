@@ -4,4 +4,23 @@
   justify-content: center;
   align-items: center;
   flex-direction: column;
+  padding: 0 16px;
+  box-sizing: border-box;
+}
+
+img {
+  width: clamp(220px, 45vw, 900px);
+  height: auto;
+}
+
+.actions {
+  display: flex;
+  gap: 32px;
+  margin-top: 16px;
+
+  @media (max-width: 600px) {
+    flex-direction: column;
+    width: 100%;
+    max-width: 280px;
+  }
 }
