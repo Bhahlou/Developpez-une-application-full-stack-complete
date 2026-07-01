@@ -1,0 +1,11 @@
+spring:
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+
+app:
+  jwt:
+    secret: dGVzdC1zZWNyZXQtZm9yLWludGVncmF0aW9uLXRlc3RzLW5vdC1mb3ItcHJvZC11c2Utb25seQ==
+    access-token-expiration-ms: 900000
+    refresh-token-expiration-ms: 604800000
