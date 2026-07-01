@@ -1,5 +1,35 @@
 # P6-Full-Stack-reseau-dev
 
+## Back
+
+### Pré-requis pour le bon fonctionnement du back
+
+    -> JDK 25
+    -> Docker
+    -> Docker Compose
+    -> Maven x.x.x
+
+### Démarrage du back
+
+Pour démarrer le back, il faut :
+
+- Démarrer Docker-Desktop sur votre poste de travail local
+- Ouvrir un terminal dans le dossier back et exécuter la commande :
+
+```
+mvn spring-boot:run
+```
+
+Le container contenant la base de données est automatiquement créé au démarrage du back.
+
+### Tests
+
+- Lancez tous les tests + la vérification de couverture :
+  `mvn verify`
+
+Le rapport de couverture est disponible ici :
+[back/target/site/jacoco/index.html](back/target/site/jacoco/index.html)
+
 ## Front
 
 This project was generated with [Angular CLI](https://github.com/angular/angular-cli) version 14.1.3.
