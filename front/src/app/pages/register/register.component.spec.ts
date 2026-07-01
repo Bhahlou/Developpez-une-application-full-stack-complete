@@ -7,10 +7,6 @@ import { RegisterComponent } from './register.component';
 import { AuthStore } from '../../core/stores/auth.store';
 import { SnackbarService } from '../../core/services/snackbar.service';
 
-function flushMicrotasks(): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, 0));
-}
-
 describe('RegisterComponent', () => {
   let component: RegisterComponent;
   let fixture: ComponentFixture<RegisterComponent>;
@@ -61,8 +57,7 @@ describe('RegisterComponent', () => {
   it('does not call the API when the form is invalid', async () => {
     const event = new Event('submit');
 
-    component['onSubmit'](event);
-    await flushMicrotasks();
+    await component['onSubmit'](event);
 
     expect(authStore.register).not.toHaveBeenCalled();
     expect(router.navigate).not.toHaveBeenCalled();
@@ -73,8 +68,7 @@ describe('RegisterComponent', () => {
     authStore.register.mockReturnValue(of({ id: 1, username: 'johndoe', email: 'john@doe.com' }));
     const event = new Event('submit');
 
-    component['onSubmit'](event);
-    await flushMicrotasks();
+    await component['onSubmit'](event);
 
     expect(authStore.register).toHaveBeenCalledWith({
       username: 'johndoe',
@@ -90,8 +84,7 @@ describe('RegisterComponent', () => {
     authStore.register.mockReturnValue(throwError(() => error));
     const event = new Event('submit');
 
-    component['onSubmit'](event);
-    await flushMicrotasks();
+    await component['onSubmit'](event);
 
     expect(snackbar.showApiError).toHaveBeenCalledWith(error);
     expect(router.navigate).not.toHaveBeenCalled();

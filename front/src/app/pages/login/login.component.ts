@@ -44,9 +44,9 @@ export class LoginComponent {
     required(schemaPath.password, { message: 'Mot de passe requis' });
   });
 
-  protected onSubmit(event: Event): void {
+  protected onSubmit(event: Event): Promise<boolean> {
     event.preventDefault();
-    submit(this.loginForm, async (field) => {
+    return submit(this.loginForm, async (field) => {
       try {
         await firstValueFrom(this.authStore.login(field().value()));
         this.router.navigate(['/dashboard']);

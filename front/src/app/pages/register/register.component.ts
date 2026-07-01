@@ -86,9 +86,9 @@ export class RegisterComponent {
     );
   });
 
-  protected onSubmit(event: Event): void {
+  protected onSubmit(event: Event): Promise<boolean> {
     event.preventDefault();
-    submit(this.registerForm, async (field) => {
+    return submit(this.registerForm, async (field) => {
       try {
         await firstValueFrom(this.authStore.register(field().value()));
         this.router.navigate(['/dashboard']);
