@@ -1,0 +1,28 @@
+<div class="page">
+  <button
+    mat-icon-button
+    class="back-button"
+    type="button"
+    (click)="goBack()"
+    aria-label="Retour"
+  >
+    <mat-icon>arrow_back</mat-icon>
+  </button>
+
+  <div class="center">
+    <mat-icon class="avatar">account_circle</mat-icon>
+    <h1>Profil utilisateur</h1>
+
+    <dl class="info">
+      <dt>Nom d'utilisateur</dt>
+      <dd>{{ authStore.user()?.username }}</dd>
+
+      <dt>Email</dt>
+      <dd>{{ authStore.user()?.email }}</dd>
+    </dl>
+
+    <button matButton="filled" routerLink="/profile/edit">
+      Modifier mon profil
+    </button>
+  </div>
+</div>

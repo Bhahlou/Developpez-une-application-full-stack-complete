@@ -23,6 +23,22 @@ export const routes: Routes = [
         loadComponent: () => import('./pages/dashboard/dashboard.component').then((m) => m.DashboardComponent),
         canActivate: [authGuard],
       },
+      {
+        path: 'themes',
+        loadComponent: () => import('./pages/themes/themes.component').then((m) => m.ThemesComponent),
+        canActivate: [authGuard],
+      },
+      {
+        path: 'profile',
+        loadComponent: () => import('./pages/profile/profile.component').then((m) => m.ProfileComponent),
+        canActivate: [authGuard],
+      },
+      {
+        path: 'profile/edit',
+        loadComponent: () =>
+          import('./pages/edit-profile/edit-profile.component').then((m) => m.EditProfileComponent),
+        canActivate: [authGuard],
+      },
     ],
   },
   { path: '**', redirectTo: '' },

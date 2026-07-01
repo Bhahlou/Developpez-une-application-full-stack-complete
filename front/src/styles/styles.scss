@@ -35,3 +35,7 @@ body {
   --mat-snack-bar-supporting-text-color: white;
   --mat-snack-bar-button-color: white;
 }
+
+.mat-mdc-menu-panel.nav-mobile-menu {
+  min-width: 240px;
+}

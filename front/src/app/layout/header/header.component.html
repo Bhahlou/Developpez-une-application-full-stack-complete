@@ -2,5 +2,55 @@
   <a routerLink="/" class="brand">
     <img src="/assets/logo_p6.png" alt="MDD" />
   </a>
-  <!-- nav links coming later -->
+
+  @if (authStore.isAuthenticated()) {
+    <nav class="nav-desktop">
+      <button type="button" class="logout-link" (click)="logout()">
+        Se déconnecter
+      </button>
+      <a routerLink="/dashboard" routerLinkActive="active">Articles</a>
+      <a routerLink="/themes" routerLinkActive="active">Thèmes</a>
+      <a
+        routerLink="/profile"
+        routerLinkActive="active"
+        class="avatar-link"
+        aria-label="Mon profil"
+      >
+        <mat-icon>account_circle</mat-icon>
+      </a>
+    </nav>
+
+    <button
+      type="button"
+      mat-icon-button
+      class="menu-trigger"
+      [matMenuTriggerFor]="mobileMenu"
+      aria-label="Ouvrir le menu"
+    >
+      <mat-icon>menu</mat-icon>
+    </button>
+
+    <mat-menu #mobileMenu="matMenu" xPosition="before" class="nav-mobile-menu">
+      <button
+        type="button"
+        mat-menu-item
+        class="logout-link"
+        (click)="logout()"
+      >
+        Se déconnecter
+      </button>
+      <a mat-menu-item routerLink="/dashboard" routerLinkActive="active"
+        >Articles</a
+      >
+      <a mat-menu-item routerLink="/themes" routerLinkActive="active">Thèmes</a>
+      <a
+        mat-menu-item
+        routerLink="/profile"
+        routerLinkActive="active"
+        aria-label="Mon profil"
+      >
+        <span class="avatar-icon"><mat-icon>account_circle</mat-icon></span>
+      </a>
+    </mat-menu>
+  }
 </mat-toolbar>
