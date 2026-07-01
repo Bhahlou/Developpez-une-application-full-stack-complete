@@ -59,7 +59,9 @@ class JwtServiceTest {
     @Test
     void isTokenValid_false_forTamperedToken() {
         String token = jwtService.generateAccessToken(user);
-        String tampered = token.substring(0, token.length() - 1) + (token.endsWith("A") ? "B" : "A");
+        int payloadStart = token.indexOf('.') + 1;
+        char flippedChar = token.charAt(payloadStart) == 'a' ? 'b' : 'a';
+        String tampered = token.substring(0, payloadStart) + flippedChar + token.substring(payloadStart + 1);
 
         assertThat(jwtService.isTokenValid(tampered)).isFalse();
     }
