@@ -89,6 +89,7 @@
             "reporters": [
               "default"
             ],
+            "coverage": true,
             "coverageReporters": [
               "html",
               "text-summary"

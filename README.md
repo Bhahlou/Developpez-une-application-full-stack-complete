@@ -44,6 +44,14 @@ Run `ng serve` for a dev server. Navigate to `http://localhost:4200/`. The appli
 
 Run `ng build` to build the project. The build artifacts will be stored in the `dist/` directory.
 
+### Tests
+
+- Lancez tous les tests + la vérification de couverture :
+  `ng test`
+
+Le rapport de couverture est disponible ici :
+[front/coverage/index.html](front/coverage/index.html)
+
 ### Where to start
 
 As you may have seen if you already started the app, a simple home page containing a logo, a title and a button is available. If you take a look at its code (in the `home.component.html`) you will see that an external UI library is already configured in the project.
