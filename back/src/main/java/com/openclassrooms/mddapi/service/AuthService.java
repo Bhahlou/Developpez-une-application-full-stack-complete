@@ -1,6 +1,7 @@
 package com.openclassrooms.mddapi.service;
 
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -8,6 +9,7 @@ import org.springframework.stereotype.Service;
 import com.openclassrooms.mddapi.dto.AuthResponse;
 import com.openclassrooms.mddapi.dto.LoginRequest;
 import com.openclassrooms.mddapi.dto.RegisterRequest;
+import com.openclassrooms.mddapi.dto.UpdateProfileRequest;
 import com.openclassrooms.mddapi.exception.UserAlreadyExistsException;
 import com.openclassrooms.mddapi.model.User;
 import com.openclassrooms.mddapi.repository.UserRepository;
@@ -61,6 +63,29 @@ public class AuthService {
         refreshTokenService.validate(refreshToken);
         User user = userRepository.findByRefreshToken(refreshToken).orElseThrow();
         refreshTokenService.revoke(user);
+    }
+
+    public AuthResponse updateProfile(Long userId, UpdateProfileRequest request) {
+        User user = userRepository.findById(userId).orElseThrow();
+
+        if (!passwordEncoder.matches(request.currentPassword(), user.getPassword())) {
+            throw new BadCredentialsException("Current password is incorrect");
+        }
+        if (userRepository.existsByUsernameAndIdNot(request.username(), userId)) {
+            throw new UserAlreadyExistsException("USER_USERNAME_TAKEN", "Username already in use");
+        }
+        if (userRepository.existsByEmailAndIdNot(request.email(), userId)) {
+            throw new UserAlreadyExistsException("USER_EMAIL_TAKEN", "Email already in use");
+        }
+
+        user.setUsername(request.username());
+        user.setEmail(request.email());
+        if (request.newPassword() != null && !request.newPassword().isBlank()) {
+            user.setPassword(passwordEncoder.encode(request.newPassword()));
+        }
+        userRepository.save(user);
+
+        return buildAuthResponse(user);
     }
 
     private AuthResponse buildAuthResponse(User user) {

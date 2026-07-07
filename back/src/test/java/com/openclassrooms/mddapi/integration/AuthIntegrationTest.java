@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.not;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -25,6 +26,7 @@ import com.openclassrooms.mddapi.dto.AuthResponse;
 import com.openclassrooms.mddapi.dto.LoginRequest;
 import com.openclassrooms.mddapi.dto.RefreshRequest;
 import com.openclassrooms.mddapi.dto.RegisterRequest;
+import com.openclassrooms.mddapi.dto.UpdateProfileRequest;
 import com.openclassrooms.mddapi.model.User;
 import com.openclassrooms.mddapi.repository.UserRepository;
 
@@ -172,6 +174,61 @@ class AuthIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(new RefreshRequest(tokens.refreshToken()))))
                 .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void updateMe_persistsChangesAndReturnsFreshTokens_soTheSessionKeepsWorkingAfterAUsernameChange() throws Exception {
+        AuthResponse tokens = registerUser("johndoe", "john@doe.com", "Passw0rd!");
+
+        UpdateProfileRequest request = new UpdateProfileRequest("janedoe", "jane@doe.com", "Passw0rd!", "NewPassw0rd!");
+        String updateBody = mockMvc.perform(put("/api/auth/me")
+                        .header("Authorization", "Bearer " + tokens.accessToken())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.accessToken").isNotEmpty())
+                .andExpect(jsonPath("$.refreshToken").value(not(tokens.refreshToken())))
+                .andReturn().getResponse().getContentAsString();
+        AuthResponse updatedTokens = objectMapper.readValue(updateBody, AuthResponse.class);
+
+        mockMvc.perform(get("/api/auth/me").header("Authorization", "Bearer " + updatedTokens.accessToken()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.username").value("janedoe"))
+                .andExpect(jsonPath("$.email").value("jane@doe.com"));
+
+        LoginRequest loginRequest = new LoginRequest("janedoe", "NewPassw0rd!");
+        mockMvc.perform(post("/api/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(loginRequest)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.accessToken").isNotEmpty());
+    }
+
+    @Test
+    void updateMe_returns401_whenCurrentPasswordIncorrect() throws Exception {
+        AuthResponse tokens = registerUser("johndoe", "john@doe.com", "Passw0rd!");
+
+        UpdateProfileRequest request = new UpdateProfileRequest("janedoe", "jane@doe.com", "wrong-password", "");
+        mockMvc.perform(put("/api/auth/me")
+                        .header("Authorization", "Bearer " + tokens.accessToken())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.code").value("AUTH_BAD_CREDENTIALS"));
+    }
+
+    @Test
+    void updateMe_returns409_whenUsernameAlreadyTakenByAnotherUser() throws Exception {
+        registerUser("janedoe", "jane@doe.com", "Passw0rd!");
+        AuthResponse tokens = registerUser("johndoe", "john@doe.com", "Passw0rd!");
+
+        UpdateProfileRequest request = new UpdateProfileRequest("janedoe", "john@doe.com", "Passw0rd!", "");
+        mockMvc.perform(put("/api/auth/me")
+                        .header("Authorization", "Bearer " + tokens.accessToken())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.code").value("USER_USERNAME_TAKEN"));
     }
 
     private AuthResponse registerUser(String username, String email, String password) throws Exception {

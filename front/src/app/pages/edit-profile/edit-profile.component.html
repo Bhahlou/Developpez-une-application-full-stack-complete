@@ -1,10 +1,124 @@
 <div class="page">
-  <button mat-icon-button class="back-button" type="button" (click)="goBack()" aria-label="Retour">
+  <button
+    mat-icon-button
+    class="back-button"
+    type="button"
+    (click)="goBack()"
+    aria-label="Retour"
+  >
     <mat-icon>arrow_back</mat-icon>
   </button>
 
   <div class="center">
     <h1>Modifier mon profil</h1>
-    <p>Bientôt disponible.</p>
+
+    <form class="auth-form" (submit)="onSubmit($event)">
+      <mat-form-field appearance="outline">
+        <mat-label>Nom d'utilisateur</mat-label>
+        <input
+          matInput
+          [formField]="editProfileForm.username"
+          autocomplete="username"
+          aria-label="Nom d'utilisateur"
+        />
+        @if (
+          editProfileForm.username().touched() && editProfileForm.username().invalid()
+        ) {
+          <mat-error>
+            @for (err of editProfileForm.username().errors(); track err.message) {
+              {{ err.message }}
+            }
+          </mat-error>
+        }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Email</mat-label>
+        <input
+          matInput
+          type="email"
+          [formField]="editProfileForm.email"
+          autocomplete="email"
+          aria-label="Email"
+        />
+        @if (editProfileForm.email().touched() && editProfileForm.email().invalid()) {
+          <mat-error>
+            @for (err of editProfileForm.email().errors(); track err.message) {
+              {{ err.message }}
+            }
+          </mat-error>
+        }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Mot de passe actuel</mat-label>
+        <input
+          matInput
+          [type]="hideCurrentPassword() ? 'password' : 'text'"
+          [formField]="editProfileForm.currentPassword"
+          autocomplete="current-password"
+          aria-label="Mot de passe actuel"
+        />
+        <button
+          mat-icon-button
+          matSuffix
+          type="button"
+          (click)="toggleCurrentPasswordVisibility()"
+          [attr.aria-label]="hideCurrentPassword() ? 'Afficher le mot de passe' : 'Masquer le mot de passe'"
+        >
+          <mat-icon>{{ hideCurrentPassword() ? 'visibility_off' : 'visibility' }}</mat-icon>
+        </button>
+        @if (
+          editProfileForm.currentPassword().touched() && editProfileForm.currentPassword().invalid()
+        ) {
+          <mat-error>
+            @for (err of editProfileForm.currentPassword().errors(); track err.message) {
+              {{ err.message }}
+            }
+          </mat-error>
+        }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Nouveau mot de passe (optionnel)</mat-label>
+        <input
+          matInput
+          [type]="hideNewPassword() ? 'password' : 'text'"
+          [formField]="editProfileForm.newPassword"
+          autocomplete="new-password"
+          aria-label="Nouveau mot de passe"
+        />
+        <button
+          mat-icon-button
+          matSuffix
+          type="button"
+          (click)="toggleNewPasswordVisibility()"
+          [attr.aria-label]="hideNewPassword() ? 'Afficher le mot de passe' : 'Masquer le mot de passe'"
+        >
+          <mat-icon>{{ hideNewPassword() ? 'visibility_off' : 'visibility' }}</mat-icon>
+        </button>
+        @if (
+          editProfileForm.newPassword().touched() && editProfileForm.newPassword().invalid()
+        ) {
+          <mat-error>
+            @for (err of editProfileForm.newPassword().errors(); track err.message) {
+              {{ err.message }}
+            }
+          </mat-error>
+        }
+      </mat-form-field>
+
+      <button
+        matButton="filled"
+        type="submit"
+        [disabled]="editProfileForm().submitting()"
+      >
+        @if (editProfileForm().submitting()) {
+          Enregistrement...
+        } @else {
+          Enregistrer
+        }
+      </button>
+    </form>
   </div>
 </div>

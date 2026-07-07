@@ -4,6 +4,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -31,6 +32,7 @@ import com.openclassrooms.mddapi.dto.AuthResponse;
 import com.openclassrooms.mddapi.dto.LoginRequest;
 import com.openclassrooms.mddapi.dto.RefreshRequest;
 import com.openclassrooms.mddapi.dto.RegisterRequest;
+import com.openclassrooms.mddapi.dto.UpdateProfileRequest;
 import com.openclassrooms.mddapi.exception.GlobalExceptionHandler;
 import com.openclassrooms.mddapi.exception.InvalidRefreshTokenException;
 import com.openclassrooms.mddapi.exception.UserAlreadyExistsException;
@@ -176,5 +178,76 @@ class AuthControllerTest {
                 .andExpect(jsonPath("$.id").value(1))
                 .andExpect(jsonPath("$.username").value("johndoe"))
                 .andExpect(jsonPath("$.email").value("john@doe.com"));
+    }
+
+    @Test
+    void updateMe_returns200WithNewTokens_whenRequestIsValid() throws Exception {
+        User user = User.builder().id(1L).username("johndoe").email("john@doe.com").password("encoded").build();
+        UserPrincipal principal = new UserPrincipal(user);
+        SecurityContextHolder.getContext()
+                .setAuthentication(new TestingAuthenticationToken(principal, null, "ROLE_USER"));
+
+        UpdateProfileRequest request = new UpdateProfileRequest("janedoe", "jane@doe.com", "Passw0rd!", "");
+        when(authService.updateProfile(any(Long.class), any(UpdateProfileRequest.class)))
+                .thenReturn(new AuthResponse("access-token", "refresh-token"));
+
+        mockMvc.perform(put("/api/auth/me")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.accessToken").value("access-token"))
+                .andExpect(jsonPath("$.refreshToken").value("refresh-token"));
+    }
+
+    @Test
+    void updateMe_returns400_whenUsernameIsBlank() throws Exception {
+        User user = User.builder().id(1L).username("johndoe").email("john@doe.com").password("encoded").build();
+        UserPrincipal principal = new UserPrincipal(user);
+        SecurityContextHolder.getContext()
+                .setAuthentication(new TestingAuthenticationToken(principal, null, "ROLE_USER"));
+
+        UpdateProfileRequest request = new UpdateProfileRequest("", "jane@doe.com", "Passw0rd!", "");
+
+        mockMvc.perform(put("/api/auth/me")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("VALIDATION_ERROR"));
+    }
+
+    @Test
+    void updateMe_returns401_whenCurrentPasswordIncorrect() throws Exception {
+        User user = User.builder().id(1L).username("johndoe").email("john@doe.com").password("encoded").build();
+        UserPrincipal principal = new UserPrincipal(user);
+        SecurityContextHolder.getContext()
+                .setAuthentication(new TestingAuthenticationToken(principal, null, "ROLE_USER"));
+
+        UpdateProfileRequest request = new UpdateProfileRequest("janedoe", "jane@doe.com", "wrong-password", "");
+        when(authService.updateProfile(any(Long.class), any(UpdateProfileRequest.class)))
+                .thenThrow(new BadCredentialsException("Current password is incorrect"));
+
+        mockMvc.perform(put("/api/auth/me")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.code").value("AUTH_BAD_CREDENTIALS"));
+    }
+
+    @Test
+    void updateMe_returns409_whenServiceReportsUserAlreadyExists() throws Exception {
+        User user = User.builder().id(1L).username("johndoe").email("john@doe.com").password("encoded").build();
+        UserPrincipal principal = new UserPrincipal(user);
+        SecurityContextHolder.getContext()
+                .setAuthentication(new TestingAuthenticationToken(principal, null, "ROLE_USER"));
+
+        UpdateProfileRequest request = new UpdateProfileRequest("janedoe", "jane@doe.com", "Passw0rd!", "");
+        when(authService.updateProfile(any(Long.class), any(UpdateProfileRequest.class)))
+                .thenThrow(new UserAlreadyExistsException("USER_USERNAME_TAKEN", "Username already in use"));
+
+        mockMvc.perform(put("/api/auth/me")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.code").value("USER_USERNAME_TAKEN"));
     }
 }

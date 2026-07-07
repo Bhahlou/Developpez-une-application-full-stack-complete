@@ -11,6 +11,7 @@ interface MockAuthService {
   register: ReturnType<typeof vi.fn>;
   login: ReturnType<typeof vi.fn>;
   getMe: ReturnType<typeof vi.fn>;
+  updateMe: ReturnType<typeof vi.fn>;
   refresh: ReturnType<typeof vi.fn>;
   logout: ReturnType<typeof vi.fn>;
   accessToken: string | null;
@@ -35,6 +36,7 @@ describe('AuthStore', () => {
       register: vi.fn(),
       login: vi.fn(),
       getMe: vi.fn(),
+      updateMe: vi.fn(),
       refresh: vi.fn(),
       logout: vi.fn(),
       accessToken: null,
@@ -89,6 +91,32 @@ describe('AuthStore', () => {
 
     expect(result).toEqual(user);
     expect(store.user()).toEqual(user);
+  });
+
+  it('updateProfile loads and stores the user with the fresh tokens after updating', async () => {
+    configure();
+    const updatedUser: UserResponse = { id: 1, username: 'janedoe', email: 'jane@doe.com' };
+    authService.updateMe.mockReturnValue(of(undefined));
+    authService.getMe.mockReturnValue(of(updatedUser));
+
+    const result = await firstValueFrom(
+      store.updateProfile({
+        username: 'janedoe',
+        email: 'jane@doe.com',
+        currentPassword: 'Passw0rd!',
+        newPassword: '',
+      }),
+    );
+
+    expect(authService.updateMe).toHaveBeenCalledWith({
+      username: 'janedoe',
+      email: 'jane@doe.com',
+      currentPassword: 'Passw0rd!',
+      newPassword: '',
+    });
+    expect(result).toEqual(updatedUser);
+    expect(store.user()).toEqual(updatedUser);
+    expect(localStorage.getItem(USER_STORAGE_KEY)).toBe(JSON.stringify(updatedUser));
   });
 
   it('refresh deduplicates calls made before the previous one completes', () => {

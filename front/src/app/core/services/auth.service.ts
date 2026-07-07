@@ -3,7 +3,13 @@ import { HttpClient } from '@angular/common/http';
 import { Observable, of, throwError } from 'rxjs';
 import { catchError, map, tap } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
-import { AuthResponse, LoginRequest, RegisterRequest, UserResponse } from '../models';
+import {
+  AuthResponse,
+  LoginRequest,
+  RegisterRequest,
+  UpdateProfileRequest,
+  UserResponse,
+} from '../models';
 
 const ACCESS_TOKEN_KEY = 'mdd_access_token';
 const REFRESH_TOKEN_KEY = 'mdd_refresh_token';
@@ -60,6 +66,12 @@ export class AuthService {
 
   getMe(): Observable<UserResponse> {
     return this.http.get<UserResponse>(`${this.apiUrl}/me`);
+  }
+
+  updateMe(request: UpdateProfileRequest): Observable<void> {
+    return this.http
+      .put<AuthResponse>(`${this.apiUrl}/me`, request)
+      .pipe(tap((auth) => this.storeTokens(auth)), map(() => undefined));
   }
 
   private storeTokens(auth: AuthResponse): void {

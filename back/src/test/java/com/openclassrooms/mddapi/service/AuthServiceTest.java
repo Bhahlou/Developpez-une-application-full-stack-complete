@@ -24,6 +24,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import com.openclassrooms.mddapi.dto.AuthResponse;
 import com.openclassrooms.mddapi.dto.LoginRequest;
 import com.openclassrooms.mddapi.dto.RegisterRequest;
+import com.openclassrooms.mddapi.dto.UpdateProfileRequest;
 import com.openclassrooms.mddapi.exception.InvalidRefreshTokenException;
 import com.openclassrooms.mddapi.exception.UserAlreadyExistsException;
 import com.openclassrooms.mddapi.model.User;
@@ -183,5 +184,107 @@ class AuthServiceTest {
                 .isInstanceOf(InvalidRefreshTokenException.class);
 
         verify(refreshTokenService, never()).revoke(any());
+    }
+
+    @Test
+    void updateProfile_updatesUsernameEmailAndPasswordAndReturnsNewTokens_whenCurrentPasswordValidAndNewPasswordProvided() {
+        User user = buildUser();
+        UpdateProfileRequest request = new UpdateProfileRequest("janedoe", "jane@doe.com", "Passw0rd!", "NewPassw0rd!");
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(passwordEncoder.matches("Passw0rd!", "encoded-password")).thenReturn(true);
+        when(userRepository.existsByUsernameAndIdNot("janedoe", 1L)).thenReturn(false);
+        when(userRepository.existsByEmailAndIdNot("jane@doe.com", 1L)).thenReturn(false);
+        when(passwordEncoder.encode("NewPassw0rd!")).thenReturn("new-encoded-password");
+        when(jwtService.generateAccessToken(user)).thenReturn("access-token");
+        when(refreshTokenService.issue(user)).thenReturn("refresh-token");
+
+        AuthResponse response = authService.updateProfile(1L, request);
+
+        assertThat(user.getUsername()).isEqualTo("janedoe");
+        assertThat(user.getEmail()).isEqualTo("jane@doe.com");
+        assertThat(user.getPassword()).isEqualTo("new-encoded-password");
+        assertThat(response.accessToken()).isEqualTo("access-token");
+        assertThat(response.refreshToken()).isEqualTo("refresh-token");
+        verify(userRepository).save(user);
+    }
+
+    @Test
+    void updateProfile_keepsPassword_whenNewPasswordBlank() {
+        User user = buildUser();
+        UpdateProfileRequest request = new UpdateProfileRequest("johndoe", "john@doe.com", "Passw0rd!", "");
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(passwordEncoder.matches("Passw0rd!", "encoded-password")).thenReturn(true);
+        when(userRepository.existsByUsernameAndIdNot("johndoe", 1L)).thenReturn(false);
+        when(userRepository.existsByEmailAndIdNot("john@doe.com", 1L)).thenReturn(false);
+        when(jwtService.generateAccessToken(user)).thenReturn("access-token");
+        when(refreshTokenService.issue(user)).thenReturn("refresh-token");
+
+        authService.updateProfile(1L, request);
+
+        assertThat(user.getPassword()).isEqualTo("encoded-password");
+        verify(passwordEncoder, never()).encode(anyString());
+    }
+
+    @Test
+    void updateProfile_keepsPassword_whenNewPasswordNull() {
+        User user = buildUser();
+        UpdateProfileRequest request = new UpdateProfileRequest("johndoe", "john@doe.com", "Passw0rd!", null);
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(passwordEncoder.matches("Passw0rd!", "encoded-password")).thenReturn(true);
+        when(userRepository.existsByUsernameAndIdNot("johndoe", 1L)).thenReturn(false);
+        when(userRepository.existsByEmailAndIdNot("john@doe.com", 1L)).thenReturn(false);
+        when(jwtService.generateAccessToken(user)).thenReturn("access-token");
+        when(refreshTokenService.issue(user)).thenReturn("refresh-token");
+
+        authService.updateProfile(1L, request);
+
+        assertThat(user.getPassword()).isEqualTo("encoded-password");
+        verify(passwordEncoder, never()).encode(anyString());
+    }
+
+    @Test
+    void updateProfile_throwsBadCredentials_whenCurrentPasswordInvalid() {
+        User user = buildUser();
+        UpdateProfileRequest request = new UpdateProfileRequest("johndoe", "john@doe.com", "wrong-password", "");
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(passwordEncoder.matches("wrong-password", "encoded-password")).thenReturn(false);
+
+        assertThatThrownBy(() -> authService.updateProfile(1L, request))
+                .isInstanceOf(BadCredentialsException.class);
+
+        verify(userRepository, never()).save(any());
+    }
+
+    @Test
+    void updateProfile_throwsUserAlreadyExists_whenUsernameTakenByAnotherUser() {
+        User user = buildUser();
+        UpdateProfileRequest request = new UpdateProfileRequest("janedoe", "john@doe.com", "Passw0rd!", "");
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(passwordEncoder.matches("Passw0rd!", "encoded-password")).thenReturn(true);
+        when(userRepository.existsByUsernameAndIdNot("janedoe", 1L)).thenReturn(true);
+
+        assertThatThrownBy(() -> authService.updateProfile(1L, request))
+                .isInstanceOf(UserAlreadyExistsException.class)
+                .extracting(ex -> ((UserAlreadyExistsException) ex).getCode())
+                .isEqualTo("USER_USERNAME_TAKEN");
+
+        verify(userRepository, never()).save(any());
+    }
+
+    @Test
+    void updateProfile_throwsUserAlreadyExists_whenEmailTakenByAnotherUser() {
+        User user = buildUser();
+        UpdateProfileRequest request = new UpdateProfileRequest("johndoe", "jane@doe.com", "Passw0rd!", "");
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(passwordEncoder.matches("Passw0rd!", "encoded-password")).thenReturn(true);
+        when(userRepository.existsByUsernameAndIdNot("johndoe", 1L)).thenReturn(false);
+        when(userRepository.existsByEmailAndIdNot("jane@doe.com", 1L)).thenReturn(true);
+
+        assertThatThrownBy(() -> authService.updateProfile(1L, request))
+                .isInstanceOf(UserAlreadyExistsException.class)
+                .extracting(ex -> ((UserAlreadyExistsException) ex).getCode())
+                .isEqualTo("USER_EMAIL_TAKEN");
+
+        verify(userRepository, never()).save(any());
     }
 }

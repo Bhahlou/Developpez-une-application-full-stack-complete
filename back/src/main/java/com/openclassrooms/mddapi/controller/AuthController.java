@@ -5,6 +5,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -13,6 +14,7 @@ import com.openclassrooms.mddapi.dto.AuthResponse;
 import com.openclassrooms.mddapi.dto.LoginRequest;
 import com.openclassrooms.mddapi.dto.RefreshRequest;
 import com.openclassrooms.mddapi.dto.RegisterRequest;
+import com.openclassrooms.mddapi.dto.UpdateProfileRequest;
 import com.openclassrooms.mddapi.dto.UserResponse;
 import com.openclassrooms.mddapi.service.AuthService;
 import com.openclassrooms.mddapi.service.UserPrincipal;
@@ -52,5 +54,11 @@ public class AuthController {
     public ResponseEntity<UserResponse> me(@AuthenticationPrincipal UserPrincipal principal) {
         var user = principal.getUser();
         return ResponseEntity.ok(new UserResponse(user.getId(), user.getUsername(), user.getEmail()));
+    }
+
+    @PutMapping("/me")
+    public ResponseEntity<AuthResponse> updateMe(@AuthenticationPrincipal UserPrincipal principal,
+            @Valid @RequestBody UpdateProfileRequest request) {
+        return ResponseEntity.ok(authService.updateProfile(principal.getUser().getId(), request));
     }
 }

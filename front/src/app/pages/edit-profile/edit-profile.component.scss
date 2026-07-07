@@ -14,8 +14,18 @@
   justify-content: center;
   align-items: center;
   flex-direction: column;
-  gap: 8px;
   padding: 0 16px;
   box-sizing: border-box;
-  text-align: center;
+}
+
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  width: 100%;
+  max-width: 360px;
+}
+
+button[type='submit'] {
+  margin-top: 12px;
 }

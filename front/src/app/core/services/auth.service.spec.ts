@@ -125,4 +125,29 @@ describe('AuthService', () => {
 
     await expect(promise).resolves.toEqual({ id: 1, username: 'johndoe', email: 'john@doe.com' });
   });
+
+  it('updateMe stores the returned tokens and completes with void', async () => {
+    const promise = firstValueFrom(
+      service.updateMe({
+        username: 'janedoe',
+        email: 'jane@doe.com',
+        currentPassword: 'Passw0rd!',
+        newPassword: '',
+      }),
+    );
+
+    const req = httpTesting.expectOne(`${apiUrl}/me`);
+    expect(req.request.method).toBe('PUT');
+    expect(req.request.body).toEqual({
+      username: 'janedoe',
+      email: 'jane@doe.com',
+      currentPassword: 'Passw0rd!',
+      newPassword: '',
+    });
+    req.flush({ accessToken: 'new-access-token', refreshToken: 'new-refresh-token' } satisfies AuthResponse);
+
+    await expect(promise).resolves.toBeUndefined();
+    expect(service.accessToken).toBe('new-access-token');
+    expect(service.refreshToken).toBe('new-refresh-token');
+  });
 });

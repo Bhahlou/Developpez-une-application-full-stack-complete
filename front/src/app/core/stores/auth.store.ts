@@ -2,7 +2,7 @@ import { Service, computed, inject, signal } from '@angular/core';
 import { Observable, of, switchMap } from 'rxjs';
 import { catchError, finalize, map, shareReplay, tap } from 'rxjs/operators';
 import { AuthService } from '../services/auth.service';
-import { LoginRequest, RegisterRequest, UserResponse } from '../models';
+import { LoginRequest, RegisterRequest, UpdateProfileRequest, UserResponse } from '../models';
 
 const USER_STORAGE_KEY = 'mdd_user';
 
@@ -37,6 +37,10 @@ export class AuthStore {
 
   loadUser(): Observable<UserResponse> {
     return this.#authService.getMe().pipe(tap((user) => this.setUser(user)));
+  }
+
+  updateProfile(request: UpdateProfileRequest): Observable<UserResponse> {
+    return this.#authService.updateMe(request).pipe(switchMap(() => this.loadUser()));
   }
 
   refresh(): Observable<void> {
