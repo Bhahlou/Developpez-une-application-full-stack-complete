@@ -63,7 +63,7 @@ describe('LoginComponent', () => {
     expect(router.navigate).not.toHaveBeenCalled();
   });
 
-  it('logs in and navigates to the dashboard on success', async () => {
+  it('logs in and navigates to the feed on success', async () => {
     component['model'].set({ identifier: 'johndoe', password: 'Passw0rd!' });
     authStore.login.mockReturnValue(of({ id: 1, username: 'johndoe', email: 'john@doe.com' }));
     const event = new Event('submit');
@@ -71,7 +71,7 @@ describe('LoginComponent', () => {
     await component['onSubmit'](event);
 
     expect(authStore.login).toHaveBeenCalledWith({ identifier: 'johndoe', password: 'Passw0rd!' });
-    expect(router.navigate).toHaveBeenCalledWith(['/dashboard']);
+    expect(router.navigate).toHaveBeenCalledWith(['/feed']);
   });
 
   it('shows an API error and does not navigate on failure', async () => {

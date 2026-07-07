@@ -18,5 +18,5 @@ export const guestGuard: CanActivateFn = () => {
 
   return authStore
     .restoreSession()
-    .pipe(map((isAuthenticated) => (isAuthenticated ? router.createUrlTree(['/dashboard']) : true)));
+    .pipe(map((isAuthenticated) => (isAuthenticated ? router.createUrlTree(['/feed']) : true)));
 };

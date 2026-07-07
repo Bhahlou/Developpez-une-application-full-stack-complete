@@ -57,12 +57,12 @@ describe('auth guards', () => {
       expect(result).toBe(true);
     });
 
-    it('redirects to /dashboard when already authenticated', async () => {
+    it('redirects to /feed when already authenticated', async () => {
       authStore.restoreSession.mockReturnValue(of(true));
 
       const result = await firstValueFrom(runGuard(guestGuard));
 
-      expect(router.createUrlTree).toHaveBeenCalledWith(['/dashboard']);
+      expect(router.createUrlTree).toHaveBeenCalledWith(['/feed']);
       expect(result).toBe(urlTree);
     });
   });

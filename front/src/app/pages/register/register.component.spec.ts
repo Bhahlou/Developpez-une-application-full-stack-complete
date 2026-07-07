@@ -63,7 +63,7 @@ describe('RegisterComponent', () => {
     expect(router.navigate).not.toHaveBeenCalled();
   });
 
-  it('registers and navigates to the dashboard on success', async () => {
+  it('registers and navigates to the feed on success', async () => {
     component['model'].set({ username: 'johndoe', email: 'john@doe.com', password: 'Passw0rd!' });
     authStore.register.mockReturnValue(of({ id: 1, username: 'johndoe', email: 'john@doe.com' }));
     const event = new Event('submit');
@@ -75,7 +75,7 @@ describe('RegisterComponent', () => {
       email: 'john@doe.com',
       password: 'Passw0rd!',
     });
-    expect(router.navigate).toHaveBeenCalledWith(['/dashboard']);
+    expect(router.navigate).toHaveBeenCalledWith(['/feed']);
   });
 
   it('shows an API error and does not navigate on failure', async () => {

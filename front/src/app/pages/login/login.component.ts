@@ -49,7 +49,7 @@ export class LoginComponent {
     return submit(this.loginForm, async (field) => {
       try {
         await firstValueFrom(this.authStore.login(field().value()));
-        this.router.navigate(['/dashboard']);
+        this.router.navigate(['/feed']);
       } catch (error) {
         this.snackbar.showApiError(error);
       }

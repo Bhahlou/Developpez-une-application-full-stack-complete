@@ -45,6 +45,11 @@ public class GlobalExceptionHandler {
         return build(HttpStatus.NOT_FOUND, ex.getCode(), ex.getMessage(), request);
     }
 
+    @ExceptionHandler(PostNotFoundException.class)
+    public ResponseEntity<ApiErrorResponse> handlePostNotFound(PostNotFoundException ex, WebRequest request) {
+        return build(HttpStatus.NOT_FOUND, ex.getCode(), ex.getMessage(), request);
+    }
+
     @ExceptionHandler(BadCredentialsException.class)
     public ResponseEntity<ApiErrorResponse> handleBadCredentials(BadCredentialsException ex, WebRequest request) {
         return build(HttpStatus.UNAUTHORIZED, "AUTH_BAD_CREDENTIALS", ex.getMessage(), request);

@@ -1,0 +1,22 @@
+<div class="page">
+  @if (loading()) {
+    <div class="loading">
+      <mat-spinner diameter="40"></mat-spinner>
+    </div>
+  } @else if (post(); as post) {
+    <div class="header-row">
+      <button type="button" mat-icon-button (click)="goBack()" aria-label="Retour">
+        <mat-icon>arrow_back</mat-icon>
+      </button>
+      <h1>{{ post.title }}</h1>
+    </div>
+
+    <div class="meta">
+      <span>{{ post.createdAt | date: 'dd/MM/yyyy' }}</span>
+      <span>{{ post.authorUsername }}</span>
+      <span>{{ post.themeTitle }}</span>
+    </div>
+
+    <p class="content">{{ post.content }}</p>
+  }
+</div>

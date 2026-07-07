@@ -1,0 +1,55 @@
+<div class="page">
+  <div class="header-row">
+    <button type="button" mat-icon-button (click)="goBack()" aria-label="Retour">
+      <mat-icon>arrow_back</mat-icon>
+    </button>
+    <h1>Créer un nouvel article</h1>
+  </div>
+
+  <form (submit)="onSubmit($event)">
+    <app-theme-select [formField]="createPostForm.themeId" [themes]="themes()" />
+
+    <mat-form-field appearance="outline">
+      <mat-label>Titre de l'article</mat-label>
+      <input matInput [formField]="createPostForm.title" aria-label="Titre de l'article" />
+      @if (createPostForm.title().touched() && createPostForm.title().invalid()) {
+        <mat-error>
+          @for (err of createPostForm.title().errors(); track err.message) {
+            {{ err.message }}
+          }
+        </mat-error>
+      }
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Contenu de l'article</mat-label>
+      <textarea
+        matInput
+        rows="8"
+        [formField]="createPostForm.content"
+        aria-label="Contenu de l'article"
+      ></textarea>
+      @if (createPostForm.content().touched() && createPostForm.content().invalid()) {
+        <mat-error>
+          @for (err of createPostForm.content().errors(); track err.message) {
+            {{ err.message }}
+          }
+        </mat-error>
+      }
+    </mat-form-field>
+
+    <div class="actions">
+      <button
+        matButton="filled"
+        type="submit"
+        [disabled]="createPostForm().invalid() || createPostForm().submitting()"
+      >
+        @if (createPostForm().submitting()) {
+          Création...
+        } @else {
+          Créer
+        }
+      </button>
+    </div>
+  </form>
+</div>

@@ -1,0 +1,22 @@
+<mat-form-field appearance="outline">
+  <mat-label>Sélectionner un thème</mat-label>
+  <mat-select
+    [value]="value()"
+    [required]="required()"
+    (selectionChange)="onSelectionChange($event.value)"
+    (openedChange)="onOpenedChange($event)"
+    (blur)="markTouched()"
+    aria-label="Thème"
+  >
+    @for (theme of themes(); track theme.id) {
+      <mat-option [value]="theme.id.toString()">{{ theme.title }}</mat-option>
+    }
+  </mat-select>
+  @if (touched() && invalid()) {
+    <mat-error>
+      @for (err of errors(); track err.message) {
+        {{ err.message }}
+      }
+    </mat-error>
+  }
+</mat-form-field>

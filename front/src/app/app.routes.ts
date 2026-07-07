@@ -19,8 +19,20 @@ export const routes: Routes = [
         canActivate: [guestGuard],
       },
       {
-        path: 'dashboard',
-        loadComponent: () => import('./pages/dashboard/dashboard.component').then((m) => m.DashboardComponent),
+        path: 'feed',
+        loadComponent: () => import('./pages/feed/feed.component').then((m) => m.FeedComponent),
+        canActivate: [authGuard],
+      },
+      {
+        path: 'feed/create',
+        loadComponent: () =>
+          import('./pages/feed/create-post/create-post.component').then((m) => m.CreatePostComponent),
+        canActivate: [authGuard],
+      },
+      {
+        path: 'feed/:id',
+        loadComponent: () =>
+          import('./pages/feed/post-detail/post-detail.component').then((m) => m.PostDetailComponent),
         canActivate: [authGuard],
       },
       {

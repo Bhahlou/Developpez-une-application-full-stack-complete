@@ -7,3 +7,5 @@ export * from './user-response.model';
 export * from './api-error-response.model';
 export * from './theme-response.model';
 export * from './create-theme-request.model';
+export * from './post-response.model';
+export * from './create-post-request.model';

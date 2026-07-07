@@ -1,0 +1,31 @@
+<div class="page">
+  <div class="header-row">
+    <a matButton="filled" routerLink="/feed/create">
+      <mat-icon>add</mat-icon>
+      Créer un article
+    </a>
+
+    <button type="button" mat-button (click)="toggleSort()">
+      Trier par
+      <mat-icon>{{ sortDirection() === 'desc' ? 'arrow_downward' : 'arrow_upward' }}</mat-icon>
+    </button>
+  </div>
+
+  @if (loading()) {
+    <div class="loading">
+      <mat-spinner diameter="40"></mat-spinner>
+    </div>
+  } @else if (posts().length === 0) {
+    <p class="empty">Aucun article pour le moment. Abonnez-vous à un thème pour voir des articles ici.</p>
+  } @else {
+    <div class="post-grid">
+      @for (post of posts(); track post.id) {
+        <a class="post-card" [routerLink]="['/feed', post.id]">
+          <h2>{{ post.title }}</h2>
+          <p class="meta">{{ post.createdAt | date: 'dd/MM/yyyy' }} · {{ post.authorUsername }}</p>
+          <p class="content">{{ post.content }}</p>
+        </a>
+      }
+    </div>
+  }
+</div>
