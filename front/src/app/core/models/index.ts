@@ -5,3 +5,5 @@ export * from './update-profile-request.model';
 export * from './auth-response.model';
 export * from './user-response.model';
 export * from './api-error-response.model';
+export * from './theme-response.model';
+export * from './create-theme-request.model';

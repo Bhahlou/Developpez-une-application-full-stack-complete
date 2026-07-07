@@ -20,6 +20,11 @@ public class GlobalExceptionHandler {
         return build(HttpStatus.CONFLICT, ex.getCode(), ex.getMessage(), request);
     }
 
+    @ExceptionHandler(ThemeAlreadyExistsException.class)
+    public ResponseEntity<ApiErrorResponse> handleThemeAlreadyExists(ThemeAlreadyExistsException ex, WebRequest request) {
+        return build(HttpStatus.CONFLICT, ex.getCode(), ex.getMessage(), request);
+    }
+
     @ExceptionHandler(InvalidRefreshTokenException.class)
     public ResponseEntity<ApiErrorResponse> handleInvalidRefreshToken(InvalidRefreshTokenException ex, WebRequest request) {
         return build(HttpStatus.UNAUTHORIZED, ex.getCode(), ex.getMessage(), request);

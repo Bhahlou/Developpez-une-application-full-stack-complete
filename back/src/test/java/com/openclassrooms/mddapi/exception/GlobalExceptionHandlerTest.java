@@ -44,6 +44,18 @@ class GlobalExceptionHandlerTest {
     }
 
     @Test
+    void handleThemeAlreadyExists_returnsConflictWithExceptionCode() {
+        ThemeAlreadyExistsException ex = new ThemeAlreadyExistsException("THEME_TITLE_TAKEN",
+                "Theme title already in use");
+
+        ResponseEntity<ApiErrorResponse> response = handler.handleThemeAlreadyExists(ex, webRequest);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
+        assertThat(response.getBody().code()).isEqualTo("THEME_TITLE_TAKEN");
+        assertThat(response.getBody().message()).isEqualTo("Theme title already in use");
+    }
+
+    @Test
     void handleInvalidRefreshToken_returnsUnauthorizedWithExceptionCode() {
         InvalidRefreshTokenException ex = new InvalidRefreshTokenException("AUTH_REFRESH_TOKEN_EXPIRED",
                 "Refresh token has expired");
