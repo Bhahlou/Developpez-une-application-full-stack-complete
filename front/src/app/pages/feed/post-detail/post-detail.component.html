@@ -18,5 +18,50 @@
     </div>
 
     <p class="content">{{ post.content }}</p>
+
+    <div class="comments">
+      <h2>Commentaires</h2>
+
+      @if (commentsLoading()) {
+        <div class="loading">
+          <mat-spinner diameter="32"></mat-spinner>
+        </div>
+      } @else {
+        @for (comment of comments(); track comment.id) {
+          <div class="comment">
+            <span class="comment-author">{{ comment.authorUsername }}</span>
+            <p class="comment-bubble">{{ comment.content }}</p>
+          </div>
+        }
+      }
+
+      <form class="add-comment" (submit)="onSubmitComment($event)">
+        <mat-form-field appearance="outline" class="comment-field">
+          <textarea
+            matInput
+            rows="1"
+            placeholder="Écrivez ici votre commentaire"
+            [formField]="addCommentForm.content"
+            aria-label="Écrivez ici votre commentaire"
+          ></textarea>
+          @if (addCommentForm.content().touched() && addCommentForm.content().invalid()) {
+            <mat-error>
+              @for (err of addCommentForm.content().errors(); track err.message) {
+                {{ err.message }}
+              }
+            </mat-error>
+          }
+        </mat-form-field>
+
+        <button
+          type="submit"
+          mat-icon-button
+          aria-label="Envoyer le commentaire"
+          [disabled]="addCommentForm().invalid() || addCommentForm().submitting()"
+        >
+          <mat-icon>send</mat-icon>
+        </button>
+      </form>
+    </div>
   }
 </div>

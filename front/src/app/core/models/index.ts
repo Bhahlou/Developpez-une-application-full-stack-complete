@@ -9,3 +9,5 @@ export * from './theme-response.model';
 export * from './create-theme-request.model';
 export * from './post-response.model';
 export * from './create-post-request.model';
+export * from './comment-response.model';
+export * from './create-comment-request.model';
