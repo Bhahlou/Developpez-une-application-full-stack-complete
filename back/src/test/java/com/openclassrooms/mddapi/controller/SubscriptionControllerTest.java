@@ -1,7 +1,10 @@
 package com.openclassrooms.mddapi.controller;
 
-import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -15,7 +18,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
-import org.springframework.http.MediaType;
 import org.springframework.security.authentication.TestingAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.method.annotation.AuthenticationPrincipalArgumentResolver;
@@ -25,20 +27,20 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.web.method.support.HandlerMethodArgumentResolver;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.openclassrooms.mddapi.dto.CreateThemeRequest;
 import com.openclassrooms.mddapi.dto.ThemeResponse;
 import com.openclassrooms.mddapi.exception.GlobalExceptionHandler;
-import com.openclassrooms.mddapi.exception.ThemeAlreadyExistsException;
+import com.openclassrooms.mddapi.exception.SubscriptionAlreadyExistsException;
+import com.openclassrooms.mddapi.exception.SubscriptionNotFoundException;
+import com.openclassrooms.mddapi.exception.ThemeNotFoundException;
 import com.openclassrooms.mddapi.model.User;
-import com.openclassrooms.mddapi.service.ThemeService;
+import com.openclassrooms.mddapi.service.SubscriptionService;
 import com.openclassrooms.mddapi.service.UserPrincipal;
 
 @WebMvcTest
 @AutoConfigureMockMvc(addFilters = false)
-@ContextConfiguration(classes = { ThemeController.class, GlobalExceptionHandler.class,
-        ThemeControllerTest.AuthenticationPrincipalTestConfig.class })
-class ThemeControllerTest {
+@ContextConfiguration(classes = { SubscriptionController.class, GlobalExceptionHandler.class,
+        SubscriptionControllerTest.AuthenticationPrincipalTestConfig.class })
+class SubscriptionControllerTest {
 
     @TestConfiguration
     static class AuthenticationPrincipalTestConfig implements WebMvcConfigurer {
@@ -51,10 +53,8 @@ class ThemeControllerTest {
     @Autowired
     private MockMvc mockMvc;
 
-    private final ObjectMapper objectMapper = new ObjectMapper();
-
     @MockitoBean
-    private ThemeService themeService;
+    private SubscriptionService subscriptionService;
 
     @AfterEach
     void clearSecurityContext() {
@@ -69,56 +69,67 @@ class ThemeControllerTest {
     }
 
     @Test
-    void findAll_returns200WithThemes() throws Exception {
+    void findMySubscriptions_returns200WithSubscribedThemes() throws Exception {
         authenticateAs(1L);
-        when(themeService.findAll(1L)).thenReturn(List.of(new ThemeResponse(1L, "Backend", "desc", true)));
+        when(subscriptionService.findMySubscriptions(1L))
+                .thenReturn(List.of(new ThemeResponse(1L, "Backend", "desc", true)));
 
-        mockMvc.perform(get("/api/themes"))
+        mockMvc.perform(get("/api/subscriptions"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].id").value(1))
-                .andExpect(jsonPath("$[0].title").value("Backend"))
-                .andExpect(jsonPath("$[0].description").value("desc"))
                 .andExpect(jsonPath("$[0].subscribed").value(true));
     }
 
     @Test
-    void create_returns201WithTheme_whenRequestIsValid() throws Exception {
+    void subscribe_returns201_whenThemeExistsAndNotAlreadySubscribed() throws Exception {
         authenticateAs(1L);
-        CreateThemeRequest request = new CreateThemeRequest("Backend", "desc");
-        when(themeService.create(any(CreateThemeRequest.class)))
-                .thenReturn(new ThemeResponse(1L, "Backend", "desc", false));
 
-        mockMvc.perform(post("/api/themes")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.id").value(1))
-                .andExpect(jsonPath("$.title").value("Backend"));
+        mockMvc.perform(post("/api/subscriptions/{themeId}", 5L))
+                .andExpect(status().isCreated());
+
+        verify(subscriptionService).subscribe(eq(1L), eq(5L));
     }
 
     @Test
-    void create_returns400_whenTitleIsBlank() throws Exception {
+    void subscribe_returns404_whenThemeDoesNotExist() throws Exception {
         authenticateAs(1L);
-        CreateThemeRequest request = new CreateThemeRequest("", "desc");
+        doThrow(new ThemeNotFoundException("THEME_NOT_FOUND", "Theme not found"))
+                .when(subscriptionService).subscribe(1L, 5L);
 
-        mockMvc.perform(post("/api/themes")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.code").value("VALIDATION_ERROR"));
+        mockMvc.perform(post("/api/subscriptions/{themeId}", 5L))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.code").value("THEME_NOT_FOUND"));
     }
 
     @Test
-    void create_returns409_whenTitleAlreadyExists() throws Exception {
+    void subscribe_returns409_whenAlreadySubscribed() throws Exception {
         authenticateAs(1L);
-        CreateThemeRequest request = new CreateThemeRequest("Backend", "desc");
-        when(themeService.create(any(CreateThemeRequest.class)))
-                .thenThrow(new ThemeAlreadyExistsException("THEME_TITLE_TAKEN", "Theme title already in use"));
+        doThrow(new SubscriptionAlreadyExistsException("SUBSCRIPTION_ALREADY_EXISTS", "Already subscribed to this theme"))
+                .when(subscriptionService).subscribe(1L, 5L);
 
-        mockMvc.perform(post("/api/themes")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
+        mockMvc.perform(post("/api/subscriptions/{themeId}", 5L))
                 .andExpect(status().isConflict())
-                .andExpect(jsonPath("$.code").value("THEME_TITLE_TAKEN"));
+                .andExpect(jsonPath("$.code").value("SUBSCRIPTION_ALREADY_EXISTS"));
+    }
+
+    @Test
+    void unsubscribe_returns204_whenSubscriptionExists() throws Exception {
+        authenticateAs(1L);
+
+        mockMvc.perform(delete("/api/subscriptions/{themeId}", 5L))
+                .andExpect(status().isNoContent());
+
+        verify(subscriptionService).unsubscribe(eq(1L), eq(5L));
+    }
+
+    @Test
+    void unsubscribe_returns404_whenSubscriptionDoesNotExist() throws Exception {
+        authenticateAs(1L);
+        doThrow(new SubscriptionNotFoundException("SUBSCRIPTION_NOT_FOUND", "Subscription not found"))
+                .when(subscriptionService).unsubscribe(1L, 5L);
+
+        mockMvc.perform(delete("/api/subscriptions/{themeId}", 5L))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.code").value("SUBSCRIPTION_NOT_FOUND"));
     }
 }

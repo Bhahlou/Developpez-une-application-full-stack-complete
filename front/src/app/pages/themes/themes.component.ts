@@ -5,6 +5,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatDialog } from '@angular/material/dialog';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { ThemeService } from '../../core/services/theme.service';
+import { SubscriptionService } from '../../core/services/subscription.service';
 import { ThemeResponse } from '../../core/models';
 import { SnackbarService } from '../../core/services/snackbar.service';
 import { CreateThemeDialogComponent } from './create-theme-dialog/create-theme-dialog.component';
@@ -18,6 +19,7 @@ import { CreateThemeDialogComponent } from './create-theme-dialog/create-theme-d
 })
 export class ThemesComponent implements OnInit {
   private readonly themeService = inject(ThemeService);
+  private readonly subscriptionService = inject(SubscriptionService);
   private readonly snackbar = inject(SnackbarService);
   private readonly dialog = inject(MatDialog);
 
@@ -38,6 +40,18 @@ export class ThemesComponent implements OnInit {
         this.snackbar.success('Thème créé.');
       }
     });
+  }
+
+  protected async subscribe(theme: ThemeResponse): Promise<void> {
+    try {
+      await firstValueFrom(this.subscriptionService.subscribe(theme.id));
+      this.themes.update((themes) =>
+        themes.map((t) => (t.id === theme.id ? { ...t, subscribed: true } : t)),
+      );
+      this.snackbar.success('Abonnement effectué.');
+    } catch (error) {
+      this.snackbar.showApiError(error);
+    }
   }
 
   private async loadThemes(): Promise<void> {

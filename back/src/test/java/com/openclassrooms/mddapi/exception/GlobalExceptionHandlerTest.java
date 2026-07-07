@@ -56,6 +56,41 @@ class GlobalExceptionHandlerTest {
     }
 
     @Test
+    void handleThemeNotFound_returnsNotFoundWithExceptionCode() {
+        ThemeNotFoundException ex = new ThemeNotFoundException("THEME_NOT_FOUND", "Theme not found");
+
+        ResponseEntity<ApiErrorResponse> response = handler.handleThemeNotFound(ex, webRequest);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+        assertThat(response.getBody().code()).isEqualTo("THEME_NOT_FOUND");
+        assertThat(response.getBody().message()).isEqualTo("Theme not found");
+    }
+
+    @Test
+    void handleSubscriptionAlreadyExists_returnsConflictWithExceptionCode() {
+        SubscriptionAlreadyExistsException ex = new SubscriptionAlreadyExistsException("SUBSCRIPTION_ALREADY_EXISTS",
+                "Already subscribed to this theme");
+
+        ResponseEntity<ApiErrorResponse> response = handler.handleSubscriptionAlreadyExists(ex, webRequest);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
+        assertThat(response.getBody().code()).isEqualTo("SUBSCRIPTION_ALREADY_EXISTS");
+        assertThat(response.getBody().message()).isEqualTo("Already subscribed to this theme");
+    }
+
+    @Test
+    void handleSubscriptionNotFound_returnsNotFoundWithExceptionCode() {
+        SubscriptionNotFoundException ex = new SubscriptionNotFoundException("SUBSCRIPTION_NOT_FOUND",
+                "Subscription not found");
+
+        ResponseEntity<ApiErrorResponse> response = handler.handleSubscriptionNotFound(ex, webRequest);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+        assertThat(response.getBody().code()).isEqualTo("SUBSCRIPTION_NOT_FOUND");
+        assertThat(response.getBody().message()).isEqualTo("Subscription not found");
+    }
+
+    @Test
     void handleInvalidRefreshToken_returnsUnauthorizedWithExceptionCode() {
         InvalidRefreshTokenException ex = new InvalidRefreshTokenException("AUTH_REFRESH_TOKEN_EXPIRED",
                 "Refresh token has expired");

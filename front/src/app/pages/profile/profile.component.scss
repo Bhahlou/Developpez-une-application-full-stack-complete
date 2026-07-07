@@ -1,5 +1,9 @@
 .page {
   position: relative;
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 24px 16px;
+  box-sizing: border-box;
 
   .back-button {
     position: absolute;
@@ -9,13 +13,11 @@
 }
 
 .center {
-  min-height: calc(100vh - 64px);
   display: flex;
-  justify-content: center;
   align-items: center;
   flex-direction: column;
   gap: 8px;
-  padding: 0 16px;
+  padding: 48px 16px 0;
   box-sizing: border-box;
   text-align: center;
 
@@ -40,5 +42,66 @@
       margin: 0 0 16px;
       font-size: 1.1rem;
     }
+  }
+}
+
+.separator {
+  margin-top: 32px;
+}
+
+.subscriptions {
+  margin-top: 24px;
+
+  h2 {
+    margin: 0 0 16px;
+    text-align: center;
+  }
+}
+
+.loading {
+  display: flex;
+  justify-content: center;
+  padding: 48px 0;
+}
+
+.empty {
+  text-align: center;
+  color: rgba(0, 0, 0, 0.6);
+  padding: 48px 0;
+}
+
+.theme-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+
+  @media (max-width: 600px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.theme-card {
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  border-radius: 8px;
+  padding: 16px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  text-align: left;
+
+  h3 {
+    margin: 0;
+    font-size: 1.1rem;
+  }
+
+  p {
+    margin: 0;
+    color: rgba(0, 0, 0, 0.7);
+  }
+
+  button {
+    margin-top: 8px;
   }
 }

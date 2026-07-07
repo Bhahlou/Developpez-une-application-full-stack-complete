@@ -25,7 +25,7 @@ describe('ThemeService', () => {
   });
 
   it('getAll issues a GET request and returns the themes', async () => {
-    const themes: ThemeResponse[] = [{ id: 1, title: 'Backend', description: 'desc' }];
+    const themes: ThemeResponse[] = [{ id: 1, title: 'Backend', description: 'desc', subscribed: false }];
     const promise = firstValueFrom(service.getAll());
 
     const req = httpTesting.expectOne(apiUrl);
@@ -37,7 +37,7 @@ describe('ThemeService', () => {
 
   it('create issues a POST request with the theme and returns the created theme', async () => {
     const request = { title: 'Backend', description: 'desc' };
-    const created: ThemeResponse = { id: 1, title: 'Backend', description: 'desc' };
+    const created: ThemeResponse = { id: 1, title: 'Backend', description: 'desc', subscribed: false };
     const promise = firstValueFrom(service.create(request));
 
     const req = httpTesting.expectOne(apiUrl);

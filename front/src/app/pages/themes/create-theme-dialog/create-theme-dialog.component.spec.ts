@@ -53,7 +53,7 @@ describe('CreateThemeDialogComponent', () => {
 
   it('creates the theme and closes the dialog with the result on success', async () => {
     component['model'].set({ title: 'Backend', description: 'desc' });
-    const created = { id: 1, title: 'Backend', description: 'desc' };
+    const created = { id: 1, title: 'Backend', description: 'desc', subscribed: false };
     themeService.create.mockReturnValue(of(created));
     const event = new Event('submit');
 

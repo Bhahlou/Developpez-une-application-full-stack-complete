@@ -19,6 +19,13 @@
         <article class="theme-card">
           <h2>{{ theme.title }}</h2>
           <p>{{ theme.description }}</p>
+          @if (theme.subscribed) {
+            <button matButton="filled" type="button" disabled>Déjà abonné</button>
+          } @else {
+            <button matButton="filled" type="button" (click)="subscribe(theme)">
+              S'abonner
+            </button>
+          }
         </article>
       }
     </div>

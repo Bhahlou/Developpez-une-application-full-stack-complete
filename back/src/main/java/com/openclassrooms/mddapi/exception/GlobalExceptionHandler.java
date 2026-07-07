@@ -30,6 +30,21 @@ public class GlobalExceptionHandler {
         return build(HttpStatus.UNAUTHORIZED, ex.getCode(), ex.getMessage(), request);
     }
 
+    @ExceptionHandler(ThemeNotFoundException.class)
+    public ResponseEntity<ApiErrorResponse> handleThemeNotFound(ThemeNotFoundException ex, WebRequest request) {
+        return build(HttpStatus.NOT_FOUND, ex.getCode(), ex.getMessage(), request);
+    }
+
+    @ExceptionHandler(SubscriptionAlreadyExistsException.class)
+    public ResponseEntity<ApiErrorResponse> handleSubscriptionAlreadyExists(SubscriptionAlreadyExistsException ex, WebRequest request) {
+        return build(HttpStatus.CONFLICT, ex.getCode(), ex.getMessage(), request);
+    }
+
+    @ExceptionHandler(SubscriptionNotFoundException.class)
+    public ResponseEntity<ApiErrorResponse> handleSubscriptionNotFound(SubscriptionNotFoundException ex, WebRequest request) {
+        return build(HttpStatus.NOT_FOUND, ex.getCode(), ex.getMessage(), request);
+    }
+
     @ExceptionHandler(BadCredentialsException.class)
     public ResponseEntity<ApiErrorResponse> handleBadCredentials(BadCredentialsException ex, WebRequest request) {
         return build(HttpStatus.UNAUTHORIZED, "AUTH_BAD_CREDENTIALS", ex.getMessage(), request);
