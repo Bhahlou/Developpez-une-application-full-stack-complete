@@ -31,3 +31,9 @@ build/
 
 ### VS Code ###
 .vscode/
+
+# AI tooling (Claude Code skills, MCP, generated best-practices)
+.claude/
+
+### Environment ###
+.env

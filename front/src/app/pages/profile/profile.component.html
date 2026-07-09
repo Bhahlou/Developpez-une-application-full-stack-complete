@@ -1,0 +1,54 @@
+<div class="page">
+  <button
+    mat-icon-button
+    class="back-button"
+    type="button"
+    (click)="goBack()"
+    aria-label="Retour"
+  >
+    <mat-icon>arrow_back</mat-icon>
+  </button>
+
+  <div class="center">
+    <mat-icon class="avatar">account_circle</mat-icon>
+    <h1>Profil utilisateur</h1>
+
+    <dl class="info">
+      <dt>Nom d'utilisateur</dt>
+      <dd>{{ authStore.user()?.username }}</dd>
+
+      <dt>Email</dt>
+      <dd>{{ authStore.user()?.email }}</dd>
+    </dl>
+
+    <button matButton="filled" routerLink="/profile/edit">
+      Modifier mon profil
+    </button>
+  </div>
+
+  <mat-divider class="separator"></mat-divider>
+
+  <div class="subscriptions">
+    <h2>Abonnements</h2>
+
+    @if (loadingSubscriptions()) {
+      <div class="loading">
+        <mat-spinner diameter="40"></mat-spinner>
+      </div>
+    } @else if (subscriptions().length === 0) {
+      <p class="empty">Aucun abonnement pour le moment.</p>
+    } @else {
+      <div class="theme-grid">
+        @for (theme of subscriptions(); track theme.id) {
+          <article class="theme-card">
+            <h3>{{ theme.title }}</h3>
+            <p>{{ theme.description }}</p>
+            <button matButton="filled" type="button" (click)="unsubscribe(theme)">
+              Se désabonner
+            </button>
+          </article>
+        }
+      </div>
+    }
+  </div>
+</div>

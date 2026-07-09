@@ -1,0 +1,33 @@
+<div class="page">
+  <div class="header-row">
+    <h1>Thèmes</h1>
+    <button matButton="filled" (click)="openCreateDialog()">
+      <mat-icon>add</mat-icon>
+      Créer un thème
+    </button>
+  </div>
+
+  @if (loading()) {
+    <div class="loading">
+      <mat-spinner diameter="40"></mat-spinner>
+    </div>
+  } @else if (themes().length === 0) {
+    <p class="empty">Aucun thème pour le moment.</p>
+  } @else {
+    <div class="theme-grid">
+      @for (theme of themes(); track theme.id) {
+        <article class="theme-card">
+          <h2>{{ theme.title }}</h2>
+          <p>{{ theme.description }}</p>
+          @if (theme.subscribed) {
+            <button matButton="filled" type="button" disabled>Déjà abonné</button>
+          } @else {
+            <button matButton="filled" type="button" (click)="subscribe(theme)">
+              S'abonner
+            </button>
+          }
+        </article>
+      }
+    </div>
+  }
+</div>

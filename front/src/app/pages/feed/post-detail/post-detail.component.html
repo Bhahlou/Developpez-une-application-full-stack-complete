@@ -1,0 +1,67 @@
+<div class="page">
+  @if (loading()) {
+    <div class="loading">
+      <mat-spinner diameter="40"></mat-spinner>
+    </div>
+  } @else if (post(); as post) {
+    <div class="header-row">
+      <button type="button" mat-icon-button (click)="goBack()" aria-label="Retour">
+        <mat-icon>arrow_back</mat-icon>
+      </button>
+      <h1>{{ post.title }}</h1>
+    </div>
+
+    <div class="meta">
+      <span>{{ post.createdAt | date: 'dd/MM/yyyy' }}</span>
+      <span>{{ post.authorUsername }}</span>
+      <span>{{ post.themeTitle }}</span>
+    </div>
+
+    <p class="content">{{ post.content }}</p>
+
+    <div class="comments">
+      <h2>Commentaires</h2>
+
+      @if (commentsLoading()) {
+        <div class="loading">
+          <mat-spinner diameter="32"></mat-spinner>
+        </div>
+      } @else {
+        @for (comment of comments(); track comment.id) {
+          <div class="comment">
+            <span class="comment-author">{{ comment.authorUsername }}</span>
+            <p class="comment-bubble">{{ comment.content }}</p>
+          </div>
+        }
+      }
+
+      <form class="add-comment" (submit)="onSubmitComment($event)">
+        <mat-form-field appearance="outline" class="comment-field">
+          <textarea
+            matInput
+            rows="1"
+            placeholder="Écrivez ici votre commentaire"
+            [formField]="addCommentForm.content"
+            aria-label="Écrivez ici votre commentaire"
+          ></textarea>
+          @if (addCommentForm.content().touched() && addCommentForm.content().invalid()) {
+            <mat-error>
+              @for (err of addCommentForm.content().errors(); track err.message) {
+                {{ err.message }}
+              }
+            </mat-error>
+          }
+        </mat-form-field>
+
+        <button
+          type="submit"
+          mat-icon-button
+          aria-label="Envoyer le commentaire"
+          [disabled]="addCommentForm().invalid() || addCommentForm().submitting()"
+        >
+          <mat-icon>send</mat-icon>
+        </button>
+      </form>
+    </div>
+  }
+</div>
