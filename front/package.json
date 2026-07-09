@@ -6,7 +6,10 @@
     "start": "ng serve",
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
-    "test": "ng test"
+    "test": "ng test",
+    "e2e:open": "cypress open",
+    "e2e:ci": "cypress run",
+    "e2e:coverage": "cypress run --browser chrome --env coverage=true"
   },
   "private": true,
   "dependencies": {
@@ -30,8 +33,12 @@
     "@angular/language-service": "^22.0.4",
     "@types/node": "^24.13.2",
     "@vitest/coverage-v8": "^4.1.9",
+    "cypress": "^15.4.0",
+    "cypress-monocart-coverage": "^1.0.1",
+    "dotenv": "^17.2.3",
     "istanbul-lib-instrument": "^6.0.3",
     "jsdom": "^29.1.1",
+    "mysql2": "^3.15.3",
     "typescript": "~6.0.3",
     "vitest": "^4.0.8"
   }

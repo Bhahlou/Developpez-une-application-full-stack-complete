@@ -1,0 +1,8 @@
+spring:
+  docker:
+    compose:
+      file: docker-compose.e2e.yml
+      stop:
+        command: down
+  datasource:
+    url: jdbc:mysql://localhost:3308/${DB_NAME}

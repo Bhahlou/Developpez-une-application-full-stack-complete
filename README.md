@@ -50,14 +50,17 @@ Run `ng build` to build the project. The build artifacts will be stored in the `
   `ng test`
 
 Le rapport de couverture est disponible ici :
-[front/coverage/index.html](front/coverage/index.html)
+[front/coverage/front/index.html](front/coverage/front/index.html)
 
-### Where to start
+### Tests E2E
 
-As you may have seen if you already started the app, a simple home page containing a logo, a title and a button is available. If you take a look at its code (in the `home.component.html`) you will see that an external UI library is already configured in the project.
+Les tests E2E (Cypress) tournent contre une base de données dédiée, isolée de la base de dev habituelle, et repartent de zéro à chaque test.
 
-This library is `@angular/material`, it's one of the most famous in the angular ecosystem. As you can see on their docs (https://material.angular.io/), it contains a lot of highly customizable components that will help you design your interfaces quickly.
+- Démarrer le back avec le profil `e2e` (démarre automatiquement la base e2e, conteneur Docker éphémère, et l'arrête à la fermeture) :
+  `mvn spring-boot:run "-Dspring-boot.run.profiles=e2e"`
+- Démarrer le front : `npm start`
+- Une fois les deux up, lancez tous les tests E2E + la vérification de couverture :
+  `npm run e2e:coverage`
 
-Note: I recommend to use material however it's not mandatory, if you prefer you can get rid of it.
-
-Good luck!
+Le rapport de couverture est disponible ici :
+[front/coverage/e2e/index.html](front/coverage/e2e/index.html)
