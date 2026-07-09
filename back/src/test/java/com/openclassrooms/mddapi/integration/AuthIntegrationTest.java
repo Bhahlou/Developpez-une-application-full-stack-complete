@@ -1,5 +1,7 @@
 package com.openclassrooms.mddapi.integration;
 
+import java.time.Instant;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.not;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -11,17 +13,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
-import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
-import org.testcontainers.mysql.MySQLContainer;
-import org.testcontainers.utility.DockerImageName;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.openclassrooms.mddapi.dto.AuthResponse;
 import com.openclassrooms.mddapi.dto.LoginRequest;
 import com.openclassrooms.mddapi.dto.RefreshRequest;
@@ -30,26 +24,11 @@ import com.openclassrooms.mddapi.dto.UpdateProfileRequest;
 import com.openclassrooms.mddapi.model.User;
 import com.openclassrooms.mddapi.repository.UserRepository;
 
-/**
- * Full-stack integration tests: real Spring context, real MySQL (Testcontainers), no mocks.
- */
-@SpringBootTest
-@AutoConfigureMockMvc
-@Testcontainers
-class AuthIntegrationTest {
-
-    @Container
-    @ServiceConnection
-    static final MySQLContainer mysql = new MySQLContainer(DockerImageName.parse("mysql:9.7"));
-
-    private final MockMvc mockMvc;
-    private final UserRepository userRepository;
-    private final ObjectMapper objectMapper = new ObjectMapper();
+class AuthIntegrationTest extends AbstractIntegrationTest {
 
     @Autowired
     AuthIntegrationTest(MockMvc mockMvc, UserRepository userRepository) {
-        this.mockMvc = mockMvc;
-        this.userRepository = userRepository;
+        super(mockMvc, userRepository);
     }
 
     @AfterEach
@@ -62,8 +41,8 @@ class AuthIntegrationTest {
         RegisterRequest request = new RegisterRequest("johndoe", "john@doe.com", "Passw0rd!");
 
         mockMvc.perform(post("/api/auth/register")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.accessToken").isNotEmpty())
                 .andExpect(jsonPath("$.refreshToken").isNotEmpty());
@@ -79,8 +58,8 @@ class AuthIntegrationTest {
 
         RegisterRequest duplicate = new RegisterRequest("johndoe", "other@doe.com", "Passw0rd!");
         mockMvc.perform(post("/api/auth/register")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(duplicate)))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(duplicate)))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.code").value("USER_USERNAME_TAKEN"));
     }
@@ -91,8 +70,8 @@ class AuthIntegrationTest {
 
         RegisterRequest duplicate = new RegisterRequest("janedoe", "john@doe.com", "Passw0rd!");
         mockMvc.perform(post("/api/auth/register")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(duplicate)))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(duplicate)))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.code").value("USER_EMAIL_TAKEN"));
     }
@@ -103,8 +82,8 @@ class AuthIntegrationTest {
 
         LoginRequest request = new LoginRequest("johndoe", "Passw0rd!");
         mockMvc.perform(post("/api/auth/login")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.accessToken").isNotEmpty());
     }
@@ -115,8 +94,8 @@ class AuthIntegrationTest {
 
         LoginRequest request = new LoginRequest("johndoe", "wrong-password");
         mockMvc.perform(post("/api/auth/login")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.code").value("AUTH_BAD_CREDENTIALS"));
     }
@@ -144,8 +123,8 @@ class AuthIntegrationTest {
 
         RefreshRequest request = new RefreshRequest(tokens.refreshToken());
         mockMvc.perform(post("/api/auth/refresh")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.accessToken").isNotEmpty())
                 .andExpect(jsonPath("$.refreshToken").value(not(tokens.refreshToken())));
@@ -155,10 +134,25 @@ class AuthIntegrationTest {
     void refresh_returns401_whenTokenUnknown() throws Exception {
         RefreshRequest request = new RefreshRequest("unknown-token");
         mockMvc.perform(post("/api/auth/refresh")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.code").value("AUTH_INVALID_REFRESH_TOKEN"));
+    }
+
+    @Test
+    void refresh_returns401_whenTokenExpired() throws Exception {
+        AuthResponse tokens = registerUser("johndoe", "john@doe.com", "Passw0rd!");
+        User user = userRepository.findByUsernameOrEmail("johndoe", "johndoe").orElseThrow();
+        user.setRefreshTokenExpiry(Instant.now().minusSeconds(1));
+        userRepository.save(user);
+
+        RefreshRequest request = new RefreshRequest(tokens.refreshToken());
+        mockMvc.perform(post("/api/auth/refresh")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.code").value("AUTH_REFRESH_TOKEN_EXPIRED"));
     }
 
     @Test
@@ -166,13 +160,13 @@ class AuthIntegrationTest {
         AuthResponse tokens = registerUser("johndoe", "john@doe.com", "Passw0rd!");
 
         mockMvc.perform(post("/api/auth/logout")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(new RefreshRequest(tokens.refreshToken()))))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(new RefreshRequest(tokens.refreshToken()))))
                 .andExpect(status().isNoContent());
 
         mockMvc.perform(post("/api/auth/refresh")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(new RefreshRequest(tokens.refreshToken()))))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(new RefreshRequest(tokens.refreshToken()))))
                 .andExpect(status().isUnauthorized());
     }
 
@@ -182,9 +176,9 @@ class AuthIntegrationTest {
 
         UpdateProfileRequest request = new UpdateProfileRequest("janedoe", "jane@doe.com", "Passw0rd!", "NewPassw0rd!");
         String updateBody = mockMvc.perform(put("/api/auth/me")
-                        .header("Authorization", "Bearer " + tokens.accessToken())
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
+                .header("Authorization", "Bearer " + tokens.accessToken())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.accessToken").isNotEmpty())
                 .andExpect(jsonPath("$.refreshToken").value(not(tokens.refreshToken())))
@@ -198,8 +192,8 @@ class AuthIntegrationTest {
 
         LoginRequest loginRequest = new LoginRequest("janedoe", "NewPassw0rd!");
         mockMvc.perform(post("/api/auth/login")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(loginRequest)))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(loginRequest)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.accessToken").isNotEmpty());
     }
@@ -210,9 +204,9 @@ class AuthIntegrationTest {
 
         UpdateProfileRequest request = new UpdateProfileRequest("janedoe", "jane@doe.com", "wrong-password", "");
         mockMvc.perform(put("/api/auth/me")
-                        .header("Authorization", "Bearer " + tokens.accessToken())
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
+                .header("Authorization", "Bearer " + tokens.accessToken())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.code").value("AUTH_BAD_CREDENTIALS"));
     }
@@ -224,19 +218,43 @@ class AuthIntegrationTest {
 
         UpdateProfileRequest request = new UpdateProfileRequest("janedoe", "john@doe.com", "Passw0rd!", "");
         mockMvc.perform(put("/api/auth/me")
-                        .header("Authorization", "Bearer " + tokens.accessToken())
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
+                .header("Authorization", "Bearer " + tokens.accessToken())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.code").value("USER_USERNAME_TAKEN"));
     }
 
-    private AuthResponse registerUser(String username, String email, String password) throws Exception {
-        RegisterRequest request = new RegisterRequest(username, email, password);
-        String body = mockMvc.perform(post("/api/auth/register")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
-                .andReturn().getResponse().getContentAsString();
-        return objectMapper.readValue(body, AuthResponse.class);
+    @Test
+    void updateMe_returns409_whenEmailAlreadyTakenByAnotherUser() throws Exception {
+        registerUser("janedoe", "jane@doe.com", "Passw0rd!");
+        AuthResponse tokens = registerUser("johndoe", "john@doe.com", "Passw0rd!");
+
+        UpdateProfileRequest request = new UpdateProfileRequest("johndoe", "jane@doe.com", "Passw0rd!", "");
+        mockMvc.perform(put("/api/auth/me")
+                .header("Authorization", "Bearer " + tokens.accessToken())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.code").value("USER_EMAIL_TAKEN"));
+    }
+
+    @Test
+    void updateMe_keepsExistingPassword_whenNewPasswordIsBlank() throws Exception {
+        AuthResponse tokens = registerUser("johndoe", "john@doe.com", "Passw0rd!");
+
+        UpdateProfileRequest request = new UpdateProfileRequest("johndoe", "john2@doe.com", "Passw0rd!", "");
+        mockMvc.perform(put("/api/auth/me")
+                .header("Authorization", "Bearer " + tokens.accessToken())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk());
+
+        LoginRequest loginRequest = new LoginRequest("johndoe", "Passw0rd!");
+        mockMvc.perform(post("/api/auth/login")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(loginRequest)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.accessToken").isNotEmpty());
     }
 }
