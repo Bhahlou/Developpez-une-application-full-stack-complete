@@ -18,11 +18,11 @@ describe('Post detail', () => {
       });
     });
 
-    cy.contains('h1', 'Signals 101');
-    cy.contains('Introduction aux signals.');
-    cy.contains('Angular');
-    cy.contains('Super article !');
-    cy.contains(user.username);
+    cy.contains('h1', 'Signals 101').should('be.visible');
+    cy.contains('Introduction aux signals.').should('be.visible');
+    cy.contains('Angular').should('be.visible');
+    cy.contains('Super article !').should('be.visible');
+    cy.contains(user.username).should('be.visible');
   });
 
   it('adds a comment through the form', () => {
@@ -58,7 +58,7 @@ describe('Post detail', () => {
 
     cy.get('textarea[aria-label="Écrivez ici votre commentaire"]').focus().blur();
 
-    cy.contains('Commentaire requis');
+    cy.contains('Commentaire requis').should('be.visible');
   });
 
   it('navigates back to the feed', () => {

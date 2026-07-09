@@ -8,7 +8,7 @@ describe('Themes', () => {
   it('shows the empty state when there are no themes', () => {
     cy.authenticatedVisit('/themes', user);
 
-    cy.contains('Aucun thème pour le moment.');
+    cy.contains('Aucun thème pour le moment.').should('be.visible');
   });
 
   it('creates a theme through the dialog and shows it in the list', () => {
@@ -19,8 +19,8 @@ describe('Themes', () => {
     cy.get('textarea[aria-label="Description"]').focus().type('Tout sur le framework Angular.');
     cy.get('button[type="submit"]').click();
 
-    cy.contains('Thème créé.');
-    cy.contains('h2', 'Angular');
+    cy.contains('Thème créé.').should('be.visible');
+    cy.contains('h2', 'Angular').should('be.visible');
   });
 
   it('shows an error when the theme title is already taken', () => {
@@ -34,7 +34,7 @@ describe('Themes', () => {
     cy.get('textarea[aria-label="Description"]').focus().type('Un autre thème Angular.');
     cy.get('button[type="submit"]').click();
 
-    cy.contains('Un thème avec ce titre existe déjà.');
+    cy.contains('Un thème avec ce titre existe déjà.').should('be.visible');
   });
 
   it('shows validation errors when leaving the create theme fields empty', () => {
@@ -44,8 +44,8 @@ describe('Themes', () => {
     cy.get('input[aria-label="Titre"]').focus().blur();
     cy.get('textarea[aria-label="Description"]').focus().blur();
 
-    cy.contains('Titre requis');
-    cy.contains('Description requise');
+    cy.contains('Titre requis').should('be.visible');
+    cy.contains('Description requise').should('be.visible');
   });
 
   it('subscribes to a theme from the themes list', () => {
@@ -63,7 +63,7 @@ describe('Themes', () => {
   it('shows the empty state on the profile page when there are no subscriptions', () => {
     cy.authenticatedVisit('/profile', user);
 
-    cy.contains('Aucun abonnement pour le moment.');
+    cy.contains('Aucun abonnement pour le moment.').should('be.visible');
   });
 
   it('unsubscribes from a theme via the profile page', () => {
@@ -76,11 +76,11 @@ describe('Themes', () => {
       cy.visitAuthenticatedAs('/profile', response.body);
     });
 
-    cy.contains('h3', 'Angular');
+    cy.contains('h3', 'Angular').should('be.visible');
     cy.contains('button', 'Se désabonner').click();
 
-    cy.contains('Désabonnement effectué.');
-    cy.contains('Aucun abonnement pour le moment.');
+    cy.contains('Désabonnement effectué.').should('be.visible');
+    cy.contains('Aucun abonnement pour le moment.').should('be.visible');
   });
 
   it('closes the create theme dialog without creating anything when cancelled', () => {

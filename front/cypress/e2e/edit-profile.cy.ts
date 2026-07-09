@@ -24,9 +24,9 @@ describe('Edit profile', () => {
     cy.get('input[aria-label="Email"]').clear().blur();
     cy.get('input[aria-label="Mot de passe actuel"]').focus().blur();
 
-    cy.contains("Nom d'utilisateur requis");
-    cy.contains('Email requis');
-    cy.contains('Mot de passe actuel requis');
+    cy.contains("Nom d'utilisateur requis").should('be.visible');
+    cy.contains('Email requis').should('be.visible');
+    cy.contains('Mot de passe actuel requis').should('be.visible');
   });
 
   it('shows a validation error for a weak new password', () => {
@@ -34,7 +34,9 @@ describe('Edit profile', () => {
 
     cy.get('input[aria-label="Nouveau mot de passe"]').focus().type('abc').blur();
 
-    cy.contains('Au moins 8 caractères, avec une majuscule, une minuscule, un chiffre et un caractère spécial');
+    cy.contains('Au moins 8 caractères, avec une majuscule, une minuscule, un chiffre et un caractère spécial').should(
+      'be.visible',
+    );
   });
 
   it('shows an error when the current password is incorrect', () => {
@@ -43,7 +45,7 @@ describe('Edit profile', () => {
     cy.get('input[aria-label="Mot de passe actuel"]').focus().type('WrongPassword1!');
     cy.get('button[type="submit"]').click();
 
-    cy.contains('Identifiant ou mot de passe incorrect.');
+    cy.contains('Identifiant ou mot de passe incorrect.').should('be.visible');
   });
 
   it('shows an error when the new username is already taken', () => {
@@ -54,7 +56,7 @@ describe('Edit profile', () => {
     cy.get('input[aria-label="Mot de passe actuel"]').focus().type(user.password);
     cy.get('button[type="submit"]').click();
 
-    cy.contains("Ce nom d'utilisateur est déjà pris.");
+    cy.contains("Ce nom d'utilisateur est déjà pris.").should('be.visible');
   });
 
   it('toggles visibility for both password fields', () => {

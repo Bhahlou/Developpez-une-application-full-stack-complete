@@ -8,7 +8,9 @@ describe('Feed', () => {
   it('shows the empty state when there are no posts', () => {
     cy.authenticatedVisit('/feed', user);
 
-    cy.contains('Aucun article pour le moment. Abonnez-vous à un thème pour voir des articles ici.');
+    cy.contains('Aucun article pour le moment. Abonnez-vous à un thème pour voir des articles ici.').should(
+      'be.visible',
+    );
   });
 
   it('lists posts from subscribed themes and navigates to the detail page', () => {
@@ -39,9 +41,9 @@ describe('Feed', () => {
       cy.visitAuthenticatedAs('/feed', response.body);
     });
 
-    cy.get('mat-icon').contains('arrow_downward');
+    cy.get('mat-icon').contains('arrow_downward').should('be.visible');
     cy.contains('button', 'Trier par').click();
-    cy.get('mat-icon').contains('arrow_upward');
+    cy.get('mat-icon').contains('arrow_upward').should('be.visible');
   });
 
   it('creates a post through the form and navigates to its detail page', () => {
@@ -82,9 +84,9 @@ describe('Feed', () => {
     cy.get('input[aria-label="Titre de l\'article"]').focus().blur();
     cy.get('textarea[aria-label="Contenu de l\'article"]').focus().blur();
 
-    cy.contains('Thème requis');
-    cy.contains('Titre requis');
-    cy.contains('Contenu requis');
+    cy.contains('Thème requis').should('be.visible');
+    cy.contains('Titre requis').should('be.visible');
+    cy.contains('Contenu requis').should('be.visible');
   });
 
   it('goes back from the create post page', () => {
