@@ -29,6 +29,16 @@ import com.openclassrooms.mddapi.service.CustomUserDetailsService;
 
 import lombok.RequiredArgsConstructor;
 
+/**
+ * Central Spring Security configuration.
+ * <p>
+ * Configures stateless JWT authentication: CSRF disabled (no cookie-based
+ * session to protect), CORS restricted to the front-end origin, a JSON
+ * {@link AuthenticationEntryPoint} for unauthenticated requests, and
+ * {@link JwtAuthenticationFilter} wired in before the standard username/password
+ * filter. Only the auth endpoints (register/login/refresh/logout) are public;
+ * everything else requires a valid bearer token.
+ */
 @Configuration
 @EnableWebSecurity
 @RequiredArgsConstructor
@@ -37,6 +47,13 @@ public class SecurityConfig {
     private final CustomUserDetailsService userDetailsService;
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
 
+    /**
+     * Builds the HTTP security filter chain applied to every request.
+     *
+     * @param http                      the security configuration builder
+     * @param authenticationEntryPoint  the entry point invoked for unauthenticated requests
+     * @return the assembled filter chain
+     */
     @Bean
     @SuppressWarnings("java:S4502") // stateless JWT auth, no cookie-based session: CSRF protection doesn't apply here
     SecurityFilterChain securityFilterChain(HttpSecurity http, AuthenticationEntryPoint authenticationEntryPoint) {
@@ -55,6 +72,13 @@ public class SecurityConfig {
         return http.build();
     }
 
+    /**
+     * Writes a JSON {@link com.openclassrooms.mddapi.dto.ApiErrorResponse} with a
+     * 401 status whenever an unauthenticated request hits a protected endpoint.
+     *
+     * @param objectMapper the mapper used to serialize the error body
+     * @return the JSON-emitting authentication entry point
+     */
     @Bean
     AuthenticationEntryPoint authenticationEntryPoint(ObjectMapper objectMapper) {
         return (request, response, authException) -> {
@@ -71,6 +95,11 @@ public class SecurityConfig {
         };
     }
 
+    /**
+     * Restricts cross-origin requests to the Angular dev server origin.
+     *
+     * @return the CORS configuration applied to every route
+     */
     @Bean
     CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
@@ -83,16 +112,30 @@ public class SecurityConfig {
         return source;
     }
 
+    /**
+     * @return the BCrypt encoder used to hash and verify user passwords
+     */
     @Bean
     PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
 
+    /**
+     * Exposes Spring Security's default {@link AuthenticationManager} as a bean
+     * so it can be injected into {@link com.openclassrooms.mddapi.service.AuthService}.
+     *
+     * @param config the authentication configuration to source the manager from
+     * @return the authentication manager
+     */
     @Bean
     AuthenticationManager authenticationManager(AuthenticationConfiguration config) {
         return config.getAuthenticationManager();
     }
 
+    /**
+     * @param passwordEncoder the encoder used to verify stored password hashes
+     * @return the provider that authenticates users against {@link CustomUserDetailsService}
+     */
     @Bean
     DaoAuthenticationProvider authenticationProvider(PasswordEncoder passwordEncoder) {
         DaoAuthenticationProvider provider = new DaoAuthenticationProvider(userDetailsService);

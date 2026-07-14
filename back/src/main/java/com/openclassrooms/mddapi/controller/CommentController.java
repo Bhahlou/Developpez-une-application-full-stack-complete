@@ -20,6 +20,9 @@ import com.openclassrooms.mddapi.service.UserPrincipal;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
+/**
+ * Comments attached to a single post.
+ */
 @RestController
 @RequestMapping("/api/posts/{postId}/comments")
 @RequiredArgsConstructor
@@ -27,11 +30,25 @@ public class CommentController {
 
     private final CommentService commentService;
 
+    /**
+     * Lists the comments of a post.
+     *
+     * @param postId the post to list comments for
+     * @return 200 with the comments, oldest first
+     */
     @GetMapping
     public ResponseEntity<List<CommentResponse>> findByPostId(@PathVariable Long postId) {
         return ResponseEntity.ok(commentService.findByPostId(postId));
     }
 
+    /**
+     * Adds a comment to a post.
+     *
+     * @param principal the authenticated user, resolved from the JWT
+     * @param postId    the post being commented on
+     * @param request   the comment content
+     * @return 201 with the created comment
+     */
     @PostMapping
     public ResponseEntity<CommentResponse> create(@AuthenticationPrincipal UserPrincipal principal,
             @PathVariable Long postId, @Valid @RequestBody CreateCommentRequest request) {

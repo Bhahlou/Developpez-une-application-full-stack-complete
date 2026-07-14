@@ -5,6 +5,14 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
+/**
+ * Registration form for creating a new account.
+ *
+ * @param username 3-20 characters, letters/digits/underscore only
+ * @param email    a valid email address
+ * @param password up to 72 characters, at least 8, with a digit, a lowercase letter,
+ *                 an uppercase letter and a special character
+ */
 public record RegisterRequest(
 
         @NotBlank @Size(min = 3, max = 20) @Pattern(regexp = "^\\w+$", message = "username must only contain letters, digits and underscores") String username,

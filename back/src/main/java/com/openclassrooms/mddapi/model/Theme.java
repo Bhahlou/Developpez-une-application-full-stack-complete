@@ -15,6 +15,10 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+/**
+ * A programming topic (e.g. Java, Angular) that users can subscribe to and
+ * publish articles under.
+ */
 @Entity
 @Table(name = "themes")
 @Data
@@ -27,9 +31,11 @@ public class Theme implements Serializable {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    /** The theme's unique display title. */
     @Column(nullable = false, unique = true)
     private String title;
 
+    /** The theme description, up to 1000 characters. */
     @Column(nullable = false, length = 1000)
     private String description;
 
