@@ -18,6 +18,12 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+/**
+ * Join entity linking a {@link User} to a {@link Theme} they follow.
+ * <p>
+ * The {@code user_id}/{@code theme_id} pair is unique: a user can only
+ * subscribe once to the same theme.
+ */
 @Entity
 @Table(name = "subscriptions", uniqueConstraints = @UniqueConstraint(columnNames = { "user_id", "theme_id" }))
 @Data
@@ -30,10 +36,12 @@ public class Subscription implements Serializable {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    /** The subscribing user. */
     @ManyToOne
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
+    /** The followed theme. */
     @ManyToOne
     @JoinColumn(name = "theme_id", nullable = false)
     private Theme theme;

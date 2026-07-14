@@ -16,6 +16,9 @@ import com.openclassrooms.mddapi.repository.UserRepository;
 
 import lombok.RequiredArgsConstructor;
 
+/**
+ * Registration, login, token refresh/logout, and profile updates.
+ */
 @Service
 @RequiredArgsConstructor
 public class AuthService {
@@ -26,6 +29,13 @@ public class AuthService {
     private final JwtService jwtService;
     private final RefreshTokenService refreshTokenService;
 
+    /**
+     * Creates a new user account with a BCrypt-hashed password.
+     *
+     * @param request the registration form
+     * @return a fresh access/refresh token pair for the new user
+     * @throws UserAlreadyExistsException if the username or email is already taken
+     */
     public AuthResponse register(RegisterRequest request) {
         if (userRepository.existsByUsername(request.username())) {
             throw new UserAlreadyExistsException("USER_USERNAME_TAKEN", "Username already in use");
@@ -44,6 +54,13 @@ public class AuthService {
         return buildAuthResponse(user);
     }
 
+    /**
+     * Authenticates a user by username/email and password.
+     *
+     * @param request the login credentials
+     * @return a fresh access/refresh token pair
+     * @throws org.springframework.security.core.AuthenticationException if the credentials are invalid
+     */
     public AuthResponse login(LoginRequest request) {
         authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(request.identifier(), request.password()));
@@ -54,17 +71,42 @@ public class AuthService {
         return buildAuthResponse(user);
     }
 
+    /**
+     * Rotates a valid refresh token into a new access/refresh token pair.
+     *
+     * @param refreshToken the refresh token to consume
+     * @return a fresh access/refresh token pair
+     * @throws com.openclassrooms.mddapi.exception.InvalidRefreshTokenException if the token is unknown or expired
+     */
     public AuthResponse refresh(String refreshToken) {
         User user = refreshTokenService.validate(refreshToken);
         return buildAuthResponse(user);
     }
 
+    /**
+     * Ends the session tied to a refresh token by revoking it.
+     *
+     * @param refreshToken the refresh token to invalidate
+     * @throws com.openclassrooms.mddapi.exception.InvalidRefreshTokenException if the token is unknown or expired
+     */
     public void logout(String refreshToken) {
         refreshTokenService.validate(refreshToken);
         User user = userRepository.findByRefreshToken(refreshToken).orElseThrow();
         refreshTokenService.revoke(user);
     }
 
+    /**
+     * Updates the caller's username, email and optionally their password.
+     * <p>
+     * Tokens are rotated on every update, since a username change would
+     * otherwise leave the old access token's subject claim stale.
+     *
+     * @param userId  the id of the user being updated
+     * @param request the new profile data; the current password is required to confirm the change
+     * @return a fresh access/refresh token pair
+     * @throws org.springframework.security.authentication.BadCredentialsException if the current password is wrong
+     * @throws UserAlreadyExistsException if the new username or email is already taken by another user
+     */
     public AuthResponse updateProfile(Long userId, UpdateProfileRequest request) {
         User user = userRepository.findById(userId).orElseThrow();
 
@@ -88,6 +130,10 @@ public class AuthService {
         return buildAuthResponse(user);
     }
 
+    /**
+     * @param user the user to issue tokens for
+     * @return a new access token and a newly-issued refresh token
+     */
     private AuthResponse buildAuthResponse(User user) {
         String accessToken = jwtService.generateAccessToken(user);
         String refreshToken = refreshTokenService.issue(user);

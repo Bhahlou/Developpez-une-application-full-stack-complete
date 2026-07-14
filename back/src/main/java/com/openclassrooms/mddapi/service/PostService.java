@@ -20,6 +20,9 @@ import com.openclassrooms.mddapi.repository.UserRepository;
 
 import lombok.RequiredArgsConstructor;
 
+/**
+ * Articles (posts): feed retrieval, detail lookup and creation.
+ */
 @Service
 @RequiredArgsConstructor
 public class PostService {
@@ -29,6 +32,13 @@ public class PostService {
     private final ThemeRepository themeRepository;
     private final UserRepository userRepository;
 
+    /**
+     * Builds the current user's feed from the themes they are subscribed to.
+     *
+     * @param userId    the current user's id
+     * @param direction sort direction applied to the creation date
+     * @return the matching posts, or an empty list if the user has no subscriptions
+     */
     public List<PostResponse> findFeed(Long userId, Sort.Direction direction) {
         Set<Long> subscribedThemeIds = subscriptionRepository.findThemeIdsByUserId(userId);
         if (subscribedThemeIds.isEmpty()) {
@@ -40,6 +50,14 @@ public class PostService {
                 .toList();
     }
 
+    /**
+     * Publishes a new post under an existing theme.
+     *
+     * @param userId  the author's id
+     * @param request the theme, title and content of the post
+     * @return the created post
+     * @throws ThemeNotFoundException if no theme matches {@code request.themeId()}
+     */
     public PostResponse create(Long userId, CreatePostRequest request) {
         Theme theme = themeRepository.findById(request.themeId())
                 .orElseThrow(() -> new ThemeNotFoundException("THEME_NOT_FOUND", "Theme not found"));
@@ -56,12 +74,23 @@ public class PostService {
         return toResponse(post);
     }
 
+    /**
+     * Returns a single post regardless of the caller's subscriptions.
+     *
+     * @param id the post id
+     * @return the post detail
+     * @throws PostNotFoundException if no post matches {@code id}
+     */
     public PostResponse findById(Long id) {
         Post post = postRepository.findById(id)
                 .orElseThrow(() -> new PostNotFoundException("POST_NOT_FOUND", "Post not found"));
         return toResponse(post);
     }
 
+    /**
+     * @param post the entity to convert
+     * @return the corresponding response DTO
+     */
     private static PostResponse toResponse(Post post) {
         return new PostResponse(
                 post.getId(),

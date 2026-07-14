@@ -14,6 +14,13 @@ import com.openclassrooms.mddapi.repository.ThemeRepository;
 
 import lombok.RequiredArgsConstructor;
 
+/**
+ * Theme catalog: listing (with subscription status) and creation.
+ * <p>
+ * Theme creation is a deliberate addition beyond the original MVP scope,
+ * validated with the training mentor, so the app can be exercised end-to-end
+ * without a manual database seed.
+ */
 @Service
 @RequiredArgsConstructor
 public class ThemeService {
@@ -21,6 +28,10 @@ public class ThemeService {
     private final ThemeRepository themeRepository;
     private final SubscriptionRepository subscriptionRepository;
 
+    /**
+     * @param userId the current user, used to flag their subscribed themes
+     * @return every theme, ordered by title, flagged with the user's subscription status
+     */
     public List<ThemeResponse> findAll(Long userId) {
         Set<Long> subscribedThemeIds = subscriptionRepository.findThemeIdsByUserId(userId);
         return themeRepository.findAllByOrderByTitleAsc().stream()
@@ -28,6 +39,13 @@ public class ThemeService {
                 .toList();
     }
 
+    /**
+     * Creates a new theme.
+     *
+     * @param request the theme's title and description
+     * @return the created theme, not yet subscribed by anyone
+     * @throws ThemeAlreadyExistsException if a theme with this title already exists
+     */
     public ThemeResponse create(CreateThemeRequest request) {
         if (themeRepository.existsByTitle(request.title())) {
             throw new ThemeAlreadyExistsException("THEME_TITLE_TAKEN", "Theme title already in use");
@@ -42,6 +60,11 @@ public class ThemeService {
         return toResponse(theme, false);
     }
 
+    /**
+     * @param theme      the entity to convert
+     * @param subscribed whether the current user is subscribed to this theme
+     * @return the corresponding response DTO
+     */
     private static ThemeResponse toResponse(Theme theme, boolean subscribed) {
         return new ThemeResponse(theme.getId(), theme.getTitle(), theme.getDescription(), subscribed);
     }

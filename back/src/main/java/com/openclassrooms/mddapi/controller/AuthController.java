@@ -22,6 +22,9 @@ import com.openclassrooms.mddapi.service.UserPrincipal;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
+/**
+ * Registration, login, token refresh, logout and current-user profile endpoints.
+ */
 @RestController
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
@@ -29,33 +32,70 @@ public class AuthController {
 
     private final AuthService authService;
 
+    /**
+     * Creates a new user account.
+     *
+     * @param request the registration form (username, email, password)
+     * @return 201 with a fresh access/refresh token pair
+     */
     @PostMapping("/register")
     public ResponseEntity<AuthResponse> register(@Valid @RequestBody RegisterRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(authService.register(request));
     }
 
+    /**
+     * Authenticates a user by username/email and password.
+     *
+     * @param request the login credentials
+     * @return 200 with a fresh access/refresh token pair
+     */
     @PostMapping("/login")
     public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request) {
         return ResponseEntity.ok(authService.login(request));
     }
 
+    /**
+     * Exchanges a valid refresh token for a new token pair.
+     *
+     * @param request the refresh token to rotate
+     * @return 200 with a new access/refresh token pair
+     */
     @PostMapping("/refresh")
     public ResponseEntity<AuthResponse> refresh(@Valid @RequestBody RefreshRequest request) {
         return ResponseEntity.ok(authService.refresh(request.refreshToken()));
     }
 
+    /**
+     * Invalidates a refresh token, ending the session it belongs to.
+     *
+     * @param request the refresh token to invalidate
+     * @return 204 No Content
+     */
     @PostMapping("/logout")
     public ResponseEntity<Void> logout(@Valid @RequestBody RefreshRequest request) {
         authService.logout(request.refreshToken());
         return ResponseEntity.noContent().build();
     }
 
+    /**
+     * Returns the profile of the currently authenticated user.
+     *
+     * @param principal the authenticated user, resolved from the JWT
+     * @return 200 with the user's id, username and email
+     */
     @GetMapping("/me")
     public ResponseEntity<UserResponse> me(@AuthenticationPrincipal UserPrincipal principal) {
         var user = principal.getUser();
         return ResponseEntity.ok(new UserResponse(user.getId(), user.getUsername(), user.getEmail()));
     }
 
+    /**
+     * Updates the current user's profile, optionally changing the password.
+     *
+     * @param principal the authenticated user, resolved from the JWT
+     * @param request   the new profile data; requires the current password
+     * @return 200 with a fresh token pair (tokens are rotated since the identity may have changed)
+     */
     @PutMapping("/me")
     public ResponseEntity<AuthResponse> updateMe(@AuthenticationPrincipal UserPrincipal principal,
             @Valid @RequestBody UpdateProfileRequest request) {

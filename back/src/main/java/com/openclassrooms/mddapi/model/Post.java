@@ -17,6 +17,10 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+/**
+ * An article published under a {@link Theme}, independent of the author's
+ * current subscription to that theme.
+ */
 @Entity
 @Table(name = "posts")
 @Data
@@ -29,16 +33,20 @@ public class Post implements Serializable {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    /** The article title. */
     @Column(nullable = false)
     private String title;
 
+    /** The article body, up to 5000 characters. */
     @Column(nullable = false, length = 5000)
     private String content;
 
+    /** The theme this article is categorized under. */
     @ManyToOne
     @JoinColumn(name = "theme_id", nullable = false)
     private Theme theme;
 
+    /** The user who wrote this article. */
     @ManyToOne
     @JoinColumn(name = "author_id", nullable = false)
     private User author;

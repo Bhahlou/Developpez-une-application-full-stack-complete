@@ -15,6 +15,12 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+/**
+ * A registered MDD user.
+ * <p>
+ * Holds the current refresh token (if any) alongside its expiry, so refresh
+ * tokens can be rotated and invalidated without a separate table.
+ */
 @Entity
 @Table(name = "users")
 @Data
@@ -27,12 +33,15 @@ public class User implements Serializable {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    /** Unique, 3-20 characters, letters/digits/underscore only. */
     @Column(nullable = false, unique = true)
     private String username;
 
+    /** Unique email address. */
     @Column(nullable = false, unique = true)
     private String email;
 
+    /** BCrypt hash of the account password; never stored or returned in clear text. */
     @Column(nullable = false)
     private String password;
 
@@ -40,8 +49,10 @@ public class User implements Serializable {
     @Builder.Default
     private Instant createdAt = Instant.now();
 
+    /** The current refresh token, or {@code null} if none is active. */
     @Column(unique = true)
     private String refreshToken;
 
+    /** Expiry of {@link #refreshToken}, or {@code null} if none is active. */
     private Instant refreshTokenExpiry;
 }

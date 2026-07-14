@@ -17,6 +17,10 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+/**
+ * A comment posted on a {@link Post}, independent of the author's current
+ * subscription to the post's theme.
+ */
 @Entity
 @Table(name = "comments")
 @Data
@@ -29,13 +33,16 @@ public class Comment implements Serializable {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    /** The comment text, up to 1000 characters. */
     @Column(nullable = false, length = 1000)
     private String content;
 
+    /** The post this comment belongs to. */
     @ManyToOne
     @JoinColumn(name = "post_id", nullable = false)
     private Post post;
 
+    /** The user who wrote this comment. */
     @ManyToOne
     @JoinColumn(name = "author_id", nullable = false)
     private User author;

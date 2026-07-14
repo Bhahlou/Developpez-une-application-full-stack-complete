@@ -16,6 +16,9 @@ import com.openclassrooms.mddapi.repository.UserRepository;
 
 import lombok.RequiredArgsConstructor;
 
+/**
+ * Comments attached to posts.
+ */
 @Service
 @RequiredArgsConstructor
 public class CommentService {
@@ -24,6 +27,11 @@ public class CommentService {
     private final PostRepository postRepository;
     private final UserRepository userRepository;
 
+    /**
+     * @param postId the post to list comments for
+     * @return the post's comments, oldest first
+     * @throws PostNotFoundException if no post matches {@code postId}
+     */
     public List<CommentResponse> findByPostId(Long postId) {
         if (!postRepository.existsById(postId)) {
             throw new PostNotFoundException("POST_NOT_FOUND", "Post not found");
@@ -34,6 +42,16 @@ public class CommentService {
                 .toList();
     }
 
+    /**
+     * Adds a comment to a post. A user may comment on any post, even on a
+     * theme they are no longer subscribed to.
+     *
+     * @param userId  the author's id
+     * @param postId  the post being commented on
+     * @param request the comment content
+     * @return the created comment
+     * @throws PostNotFoundException if no post matches {@code postId}
+     */
     public CommentResponse create(Long userId, Long postId, CreateCommentRequest request) {
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new PostNotFoundException("POST_NOT_FOUND", "Post not found"));
@@ -49,6 +67,10 @@ public class CommentService {
         return toResponse(comment);
     }
 
+    /**
+     * @param comment the entity to convert
+     * @return the corresponding response DTO
+     */
     private static CommentResponse toResponse(Comment comment) {
         return new CommentResponse(
                 comment.getId(),
