@@ -35,7 +35,7 @@ class ThemeServiceTest {
 
     @BeforeEach
     void setUp() {
-        themeService = new ThemeService(themeRepository, subscriptionRepository);
+        themeService = new ThemeServiceImpl(themeRepository, subscriptionRepository);
     }
 
     @Test

@@ -43,7 +43,7 @@ class SubscriptionServiceTest {
 
     @BeforeEach
     void setUp() {
-        subscriptionService = new SubscriptionService(subscriptionRepository, themeRepository, userRepository);
+        subscriptionService = new SubscriptionServiceImpl(subscriptionRepository, themeRepository, userRepository);
     }
 
     @Test

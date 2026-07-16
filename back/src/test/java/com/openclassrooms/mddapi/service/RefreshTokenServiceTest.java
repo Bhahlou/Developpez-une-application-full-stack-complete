@@ -33,7 +33,7 @@ class RefreshTokenServiceTest {
 
     @BeforeEach
     void setUp() {
-        refreshTokenService = new RefreshTokenService(userRepository,
+        refreshTokenService = new RefreshTokenServiceImpl(userRepository,
                 new JwtProperties("unused-secret", 900_000L, REFRESH_EXPIRATION_MS));
     }
 

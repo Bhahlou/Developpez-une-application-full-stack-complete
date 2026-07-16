@@ -52,7 +52,7 @@ class AuthServiceTest {
 
     @BeforeEach
     void setUp() {
-        authService = new AuthService(userRepository, passwordEncoder, authenticationManager, jwtService,
+        authService = new AuthServiceImpl(userRepository, passwordEncoder, authenticationManager, jwtService,
                 refreshTokenService);
     }
 

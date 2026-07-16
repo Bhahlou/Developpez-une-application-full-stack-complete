@@ -22,7 +22,7 @@ class JwtServiceTest {
 
     @BeforeEach
     void setUp() {
-        jwtService = new JwtService(new JwtProperties(SECRET, 900_000L, 604_800_000L));
+        jwtService = new JwtServiceImpl(new JwtProperties(SECRET, 900_000L, 604_800_000L));
         user = User.builder()
                 .id(42L)
                 .username("johndoe")
@@ -73,7 +73,7 @@ class JwtServiceTest {
 
     @Test
     void isTokenValid_false_forExpiredToken() {
-        JwtService expiringJwtService = new JwtService(new JwtProperties(SECRET, -1_000L, 604_800_000L));
+        JwtService expiringJwtService = new JwtServiceImpl(new JwtProperties(SECRET, -1_000L, 604_800_000L));
         String expiredToken = expiringJwtService.generateAccessToken(user);
 
         assertThat(jwtService.isTokenValid(expiredToken)).isFalse();

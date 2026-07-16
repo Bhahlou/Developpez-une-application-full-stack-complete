@@ -13,6 +13,7 @@ import org.springframework.security.config.annotation.authentication.configurati
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.AuthenticationEntryPoint;
@@ -25,7 +26,6 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import com.openclassrooms.mddapi.dto.ApiErrorResponse;
 
 import tools.jackson.databind.ObjectMapper;
-import com.openclassrooms.mddapi.service.CustomUserDetailsService;
 
 import lombok.RequiredArgsConstructor;
 
@@ -44,7 +44,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class SecurityConfig {
 
-    private final CustomUserDetailsService userDetailsService;
+    private final UserDetailsService userDetailsService;
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
 
     /**
@@ -134,7 +134,7 @@ public class SecurityConfig {
 
     /**
      * @param passwordEncoder the encoder used to verify stored password hashes
-     * @return the provider that authenticates users against {@link CustomUserDetailsService}
+     * @return the provider that authenticates users against {@link UserDetailsService}
      */
     @Bean
     DaoAuthenticationProvider authenticationProvider(PasswordEncoder passwordEncoder) {

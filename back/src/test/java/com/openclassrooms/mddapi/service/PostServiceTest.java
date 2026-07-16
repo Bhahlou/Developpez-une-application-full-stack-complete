@@ -55,7 +55,7 @@ class PostServiceTest {
 
     @BeforeEach
     void setUp() {
-        postService = new PostService(postRepository, subscriptionRepository, themeRepository, userRepository);
+        postService = new PostServiceImpl(postRepository, subscriptionRepository, themeRepository, userRepository);
     }
 
     @Test

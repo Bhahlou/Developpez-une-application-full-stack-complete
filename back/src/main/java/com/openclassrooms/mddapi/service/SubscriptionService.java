@@ -2,42 +2,21 @@ package com.openclassrooms.mddapi.service;
 
 import java.util.List;
 
-import org.springframework.stereotype.Service;
-
 import com.openclassrooms.mddapi.dto.ThemeResponse;
 import com.openclassrooms.mddapi.exception.SubscriptionAlreadyExistsException;
 import com.openclassrooms.mddapi.exception.SubscriptionNotFoundException;
 import com.openclassrooms.mddapi.exception.ThemeNotFoundException;
-import com.openclassrooms.mddapi.model.Subscription;
-import com.openclassrooms.mddapi.model.Theme;
-import com.openclassrooms.mddapi.repository.SubscriptionRepository;
-import com.openclassrooms.mddapi.repository.ThemeRepository;
-import com.openclassrooms.mddapi.repository.UserRepository;
-
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 
 /**
  * Theme subscriptions of a user.
  */
-@Slf4j
-@Service
-@RequiredArgsConstructor
-public class SubscriptionService {
-
-    private final SubscriptionRepository subscriptionRepository;
-    private final ThemeRepository themeRepository;
-    private final UserRepository userRepository;
+public interface SubscriptionService {
 
     /**
      * @param userId the user whose subscriptions to list
      * @return the subscribed themes, ordered by title
      */
-    public List<ThemeResponse> findMySubscriptions(Long userId) {
-        return subscriptionRepository.findByUserIdOrderByTheme_TitleAsc(userId).stream()
-                .map(subscription -> toResponse(subscription.getTheme()))
-                .toList();
-    }
+    List<ThemeResponse> findMySubscriptions(Long userId);
 
     /**
      * Subscribes a user to a theme.
@@ -47,22 +26,7 @@ public class SubscriptionService {
      * @throws SubscriptionAlreadyExistsException if the user is already subscribed to this theme
      * @throws ThemeNotFoundException if no theme matches {@code themeId}
      */
-    public void subscribe(Long userId, Long themeId) {
-        if (subscriptionRepository.existsByUserIdAndThemeId(userId, themeId)) {
-            throw new SubscriptionAlreadyExistsException("SUBSCRIPTION_ALREADY_EXISTS",
-                    "Already subscribed to this theme");
-        }
-
-        Theme theme = themeRepository.findById(themeId)
-                .orElseThrow(() -> new ThemeNotFoundException("THEME_NOT_FOUND", "Theme not found"));
-
-        Subscription subscription = Subscription.builder()
-                .user(userRepository.getReferenceById(userId))
-                .theme(theme)
-                .build();
-        subscriptionRepository.save(subscription);
-        log.info("User subscribed to theme: userId={}, themeId={}", userId, themeId);
-    }
+    void subscribe(Long userId, Long themeId);
 
     /**
      * Unsubscribes a user from a theme.
@@ -71,19 +35,5 @@ public class SubscriptionService {
      * @param themeId the theme to unsubscribe from
      * @throws SubscriptionNotFoundException if the user isn't subscribed to this theme
      */
-    public void unsubscribe(Long userId, Long themeId) {
-        Subscription subscription = subscriptionRepository.findByUserIdAndThemeId(userId, themeId)
-                .orElseThrow(() -> new SubscriptionNotFoundException("SUBSCRIPTION_NOT_FOUND", "Subscription not found"));
-
-        subscriptionRepository.delete(subscription);
-        log.info("User unsubscribed from theme: userId={}, themeId={}", userId, themeId);
-    }
-
-    /**
-     * @param theme the entity to convert
-     * @return the corresponding response DTO, always flagged as subscribed
-     */
-    private static ThemeResponse toResponse(Theme theme) {
-        return new ThemeResponse(theme.getId(), theme.getTitle(), theme.getDescription(), true);
-    }
+    void unsubscribe(Long userId, Long themeId);
 }
