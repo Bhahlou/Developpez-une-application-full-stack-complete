@@ -96,6 +96,16 @@ public class GlobalExceptionHandler {
     }
 
     /**
+     * @param ex      the not-subscribed error
+     * @param request the failed request
+     * @return 403 Forbidden with the exception's code and message
+     */
+    @ExceptionHandler(PostAccessDeniedException.class)
+    public ResponseEntity<ApiErrorResponse> handlePostAccessDenied(PostAccessDeniedException ex, WebRequest request) {
+        return build(HttpStatus.FORBIDDEN, ex.getCode(), ex.getMessage(), request);
+    }
+
+    /**
      * @param ex      the authentication failure raised by Spring Security
      * @param request the failed request
      * @return 401 Unauthorized with a generic {@code AUTH_BAD_CREDENTIALS} code

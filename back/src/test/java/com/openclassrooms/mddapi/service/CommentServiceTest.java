@@ -18,6 +18,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.openclassrooms.mddapi.dto.CommentResponse;
 import com.openclassrooms.mddapi.dto.CreateCommentRequest;
+import com.openclassrooms.mddapi.exception.PostAccessDeniedException;
 import com.openclassrooms.mddapi.exception.PostNotFoundException;
 import com.openclassrooms.mddapi.model.Comment;
 import com.openclassrooms.mddapi.model.Post;
@@ -25,6 +26,7 @@ import com.openclassrooms.mddapi.model.Theme;
 import com.openclassrooms.mddapi.model.User;
 import com.openclassrooms.mddapi.repository.CommentRepository;
 import com.openclassrooms.mddapi.repository.PostRepository;
+import com.openclassrooms.mddapi.repository.SubscriptionRepository;
 import com.openclassrooms.mddapi.repository.UserRepository;
 
 @ExtendWith(MockitoExtension.class)
@@ -37,22 +39,38 @@ class CommentServiceTest {
     private PostRepository postRepository;
 
     @Mock
+    private SubscriptionRepository subscriptionRepository;
+
+    @Mock
     private UserRepository userRepository;
 
     private CommentService commentService;
 
     @BeforeEach
     void setUp() {
-        commentService = new CommentServiceImpl(commentRepository, postRepository, userRepository);
+        commentService = new CommentServiceImpl(commentRepository, postRepository, subscriptionRepository, userRepository);
     }
 
     @Test
     void findByPostId_throws_whenPostDoesNotExist() {
-        when(postRepository.existsById(1L)).thenReturn(false);
+        when(postRepository.findById(1L)).thenReturn(java.util.Optional.empty());
 
-        assertThatThrownBy(() -> commentService.findByPostId(1L))
+        assertThatThrownBy(() -> commentService.findByPostId(1L, 2L))
                 .isInstanceOf(PostNotFoundException.class)
                 .hasMessage("Post not found");
+    }
+
+    @Test
+    void findByPostId_throws_whenNotSubscribed() {
+        Theme theme = Theme.builder().id(1L).title("Backend").description("desc").build();
+        User author = User.builder().id(2L).username("johndoe").email("john@doe.com").password("encoded").build();
+        Post post = Post.builder().id(1L).title("t").content("c").theme(theme).author(author).build();
+        when(postRepository.findById(1L)).thenReturn(java.util.Optional.of(post));
+        when(subscriptionRepository.existsByUserIdAndThemeId(2L, 1L)).thenReturn(false);
+
+        assertThatThrownBy(() -> commentService.findByPostId(1L, 2L))
+                .isInstanceOf(PostAccessDeniedException.class)
+                .hasMessage("You are not subscribed to this post's theme");
     }
 
     @Test
@@ -63,21 +81,23 @@ class CommentServiceTest {
         Instant createdAt = Instant.parse("2026-01-01T00:00:00Z");
         Comment comment = Comment.builder().id(1L).content("Nice article").post(post).author(author)
                 .createdAt(createdAt).build();
-        when(postRepository.existsById(1L)).thenReturn(true);
+        when(postRepository.findById(1L)).thenReturn(java.util.Optional.of(post));
+        when(subscriptionRepository.existsByUserIdAndThemeId(2L, 1L)).thenReturn(true);
         when(commentRepository.findByPost_IdOrderByCreatedAtAsc(1L)).thenReturn(List.of(comment));
 
-        List<CommentResponse> result = commentService.findByPostId(1L);
+        List<CommentResponse> result = commentService.findByPostId(1L, 2L);
 
         assertThat(result).containsExactly(new CommentResponse(1L, "Nice article", "johndoe", createdAt));
     }
 
     @Test
-    void create_savesAndReturnsComment_whenPostExists() {
+    void create_savesAndReturnsComment_whenPostExistsAndSubscribed() {
         Theme theme = Theme.builder().id(1L).title("Backend").description("desc").build();
         User author = User.builder().id(2L).username("johndoe").email("john@doe.com").password("encoded").build();
         Post post = Post.builder().id(1L).title("t").content("c").theme(theme).author(author).build();
         CreateCommentRequest request = new CreateCommentRequest("Nice article");
         when(postRepository.findById(1L)).thenReturn(java.util.Optional.of(post));
+        when(subscriptionRepository.existsByUserIdAndThemeId(2L, 1L)).thenReturn(true);
         when(userRepository.getReferenceById(2L)).thenReturn(author);
 
         CommentResponse response = commentService.create(2L, 1L, request);
@@ -95,6 +115,21 @@ class CommentServiceTest {
         assertThatThrownBy(() -> commentService.create(2L, 1L, request))
                 .isInstanceOf(PostNotFoundException.class)
                 .hasMessage("Post not found");
+        verify(commentRepository, never()).save(any(Comment.class));
+    }
+
+    @Test
+    void create_throws_whenNotSubscribed() {
+        Theme theme = Theme.builder().id(1L).title("Backend").description("desc").build();
+        User author = User.builder().id(2L).username("johndoe").email("john@doe.com").password("encoded").build();
+        Post post = Post.builder().id(1L).title("t").content("c").theme(theme).author(author).build();
+        CreateCommentRequest request = new CreateCommentRequest("Nice article");
+        when(postRepository.findById(1L)).thenReturn(java.util.Optional.of(post));
+        when(subscriptionRepository.existsByUserIdAndThemeId(2L, 1L)).thenReturn(false);
+
+        assertThatThrownBy(() -> commentService.create(2L, 1L, request))
+                .isInstanceOf(PostAccessDeniedException.class)
+                .hasMessage("You are not subscribed to this post's theme");
         verify(commentRepository, never()).save(any(Comment.class));
     }
 }

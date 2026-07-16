@@ -26,6 +26,7 @@ import org.springframework.data.domain.Sort;
 import com.openclassrooms.mddapi.dto.CreatePostRequest;
 import com.openclassrooms.mddapi.dto.PostPageResponse;
 import com.openclassrooms.mddapi.dto.PostResponse;
+import com.openclassrooms.mddapi.exception.PostAccessDeniedException;
 import com.openclassrooms.mddapi.exception.PostNotFoundException;
 import com.openclassrooms.mddapi.exception.ThemeNotFoundException;
 import com.openclassrooms.mddapi.model.Post;
@@ -115,15 +116,16 @@ class PostServiceTest {
     }
 
     @Test
-    void findById_returnsPost_whenExists() {
+    void findById_returnsPost_whenExistsAndSubscribed() {
         Theme theme = Theme.builder().id(1L).title("Backend").description("desc").build();
         User author = User.builder().id(2L).username("johndoe").email("john@doe.com").password("encoded").build();
         Instant createdAt = Instant.parse("2026-01-01T00:00:00Z");
         Post post = Post.builder().id(1L).title("t").content("c").theme(theme).author(author).createdAt(createdAt)
                 .build();
         when(postRepository.findById(1L)).thenReturn(java.util.Optional.of(post));
+        when(subscriptionRepository.existsByUserIdAndThemeId(42L, 1L)).thenReturn(true);
 
-        PostResponse response = postService.findById(1L);
+        PostResponse response = postService.findById(1L, 42L);
 
         assertThat(response).isEqualTo(new PostResponse(1L, "t", "c", 1L, "Backend", "johndoe", createdAt));
     }
@@ -132,8 +134,21 @@ class PostServiceTest {
     void findById_throws_whenNotFound() {
         when(postRepository.findById(1L)).thenReturn(java.util.Optional.empty());
 
-        assertThatThrownBy(() -> postService.findById(1L))
+        assertThatThrownBy(() -> postService.findById(1L, 42L))
                 .isInstanceOf(PostNotFoundException.class)
                 .hasMessage("Post not found");
+    }
+
+    @Test
+    void findById_throws_whenNotSubscribed() {
+        Theme theme = Theme.builder().id(1L).title("Backend").description("desc").build();
+        User author = User.builder().id(2L).username("johndoe").email("john@doe.com").password("encoded").build();
+        Post post = Post.builder().id(1L).title("t").content("c").theme(theme).author(author).build();
+        when(postRepository.findById(1L)).thenReturn(java.util.Optional.of(post));
+        when(subscriptionRepository.existsByUserIdAndThemeId(42L, 1L)).thenReturn(false);
+
+        assertThatThrownBy(() -> postService.findById(1L, 42L))
+                .isInstanceOf(PostAccessDeniedException.class)
+                .hasMessage("You are not subscribed to this post's theme");
     }
 }

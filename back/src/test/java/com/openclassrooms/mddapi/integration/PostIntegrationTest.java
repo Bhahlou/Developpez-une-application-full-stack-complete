@@ -88,17 +88,31 @@ class PostIntegrationTest extends AbstractIntegrationTest {
     }
 
     @Test
-    void findById_returnsPostDetails() throws Exception {
+    void findById_returnsPostDetails_whenSubscribedToTheme() throws Exception {
         AuthResponse tokens = registerUser("johndoe", "john@doe.com", "Passw0rd!");
         User author = userRepository.findByUsernameOrEmail("johndoe", "johndoe").orElseThrow();
         Theme theme = themeRepository.save(Theme.builder().title("Java").description("The JVM language").build());
         Post post = postRepository.save(Post.builder().title("Title").content("Content").theme(theme).author(author).build());
+        mockMvc.perform(post("/api/subscriptions/" + theme.getId())
+                .header("Authorization", "Bearer " + tokens.accessToken()));
 
         mockMvc.perform(get("/api/posts/" + post.getId()).header("Authorization", "Bearer " + tokens.accessToken()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.title").value("Title"))
                 .andExpect(jsonPath("$.themeTitle").value("Java"))
                 .andExpect(jsonPath("$.authorUsername").value("johndoe"));
+    }
+
+    @Test
+    void findById_returns403_whenNotSubscribedToTheme() throws Exception {
+        AuthResponse tokens = registerUser("johndoe", "john@doe.com", "Passw0rd!");
+        User author = userRepository.findByUsernameOrEmail("johndoe", "johndoe").orElseThrow();
+        Theme theme = themeRepository.save(Theme.builder().title("Java").description("The JVM language").build());
+        Post post = postRepository.save(Post.builder().title("Title").content("Content").theme(theme).author(author).build());
+
+        mockMvc.perform(get("/api/posts/" + post.getId()).header("Authorization", "Bearer " + tokens.accessToken()))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.code").value("POST_ACCESS_DENIED"));
     }
 
     @Test

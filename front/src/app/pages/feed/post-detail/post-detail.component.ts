@@ -86,6 +86,7 @@ export class PostDetailComponent implements OnInit {
       this.post.set(await firstValueFrom(this.postService.getById(this.postId)));
     } catch (error) {
       this.snackbar.showApiError(error);
+      this.router.navigate(['/feed']);
     } finally {
       this.loading.set(false);
     }
@@ -97,6 +98,7 @@ export class PostDetailComponent implements OnInit {
       this.comments.set(await firstValueFrom(this.commentService.getByPostId(this.postId)));
     } catch (error) {
       this.snackbar.showApiError(error);
+      this.router.navigate(['/feed']);
     } finally {
       this.commentsLoading.set(false);
     }

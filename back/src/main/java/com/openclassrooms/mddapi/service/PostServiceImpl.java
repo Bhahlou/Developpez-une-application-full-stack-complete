@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import com.openclassrooms.mddapi.dto.CreatePostRequest;
 import com.openclassrooms.mddapi.dto.PostPageResponse;
 import com.openclassrooms.mddapi.dto.PostResponse;
+import com.openclassrooms.mddapi.exception.PostAccessDeniedException;
 import com.openclassrooms.mddapi.exception.PostNotFoundException;
 import com.openclassrooms.mddapi.exception.ThemeNotFoundException;
 import com.openclassrooms.mddapi.model.Post;
@@ -70,9 +71,12 @@ public class PostServiceImpl implements PostService {
     }
 
     @Override
-    public PostResponse findById(Long id) {
+    public PostResponse findById(Long id, Long userId) {
         Post post = postRepository.findById(id)
                 .orElseThrow(() -> new PostNotFoundException("POST_NOT_FOUND", "Post not found"));
+        if (!subscriptionRepository.existsByUserIdAndThemeId(userId, post.getTheme().getId())) {
+            throw new PostAccessDeniedException("POST_ACCESS_DENIED", "You are not subscribed to this post's theme");
+        }
         return toResponse(post);
     }
 

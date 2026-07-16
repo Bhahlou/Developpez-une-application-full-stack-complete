@@ -51,14 +51,15 @@ public class PostController {
     }
 
     /**
-     * Returns a single post, regardless of the caller's subscriptions.
+     * Returns a single post, provided the caller is subscribed to its theme.
      *
-     * @param id the post id
+     * @param principal the authenticated user, resolved from the JWT
+     * @param id        the post id
      * @return 200 with the post detail
      */
     @GetMapping("/{id}")
-    public ResponseEntity<PostResponse> findById(@PathVariable Long id) {
-        return ResponseEntity.ok(postService.findById(id));
+    public ResponseEntity<PostResponse> findById(@AuthenticationPrincipal UserPrincipal principal, @PathVariable Long id) {
+        return ResponseEntity.ok(postService.findById(id, principal.getUser().getId()));
     }
 
     /**

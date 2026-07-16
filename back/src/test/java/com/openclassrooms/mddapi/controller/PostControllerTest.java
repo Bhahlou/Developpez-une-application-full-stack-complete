@@ -33,6 +33,7 @@ import com.openclassrooms.mddapi.dto.CreatePostRequest;
 import com.openclassrooms.mddapi.dto.PostPageResponse;
 import com.openclassrooms.mddapi.dto.PostResponse;
 import com.openclassrooms.mddapi.exception.GlobalExceptionHandler;
+import com.openclassrooms.mddapi.exception.PostAccessDeniedException;
 import com.openclassrooms.mddapi.exception.PostNotFoundException;
 import com.openclassrooms.mddapi.exception.ThemeNotFoundException;
 import com.openclassrooms.mddapi.model.User;
@@ -116,8 +117,9 @@ class PostControllerTest {
 
     @Test
     void findById_returns200WithPost_whenExists() throws Exception {
+        authenticateAs(1L);
         PostResponse response = new PostResponse(1L, "Title", "Content", 2L, "Backend", "johndoe", Instant.now());
-        when(postService.findById(1L)).thenReturn(response);
+        when(postService.findById(1L, 1L)).thenReturn(response);
 
         mockMvc.perform(get("/api/posts/1"))
                 .andExpect(status().isOk())
@@ -127,11 +129,23 @@ class PostControllerTest {
 
     @Test
     void findById_returns404_whenNotFound() throws Exception {
-        when(postService.findById(1L)).thenThrow(new PostNotFoundException("POST_NOT_FOUND", "Post not found"));
+        authenticateAs(1L);
+        when(postService.findById(1L, 1L)).thenThrow(new PostNotFoundException("POST_NOT_FOUND", "Post not found"));
 
         mockMvc.perform(get("/api/posts/1"))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.code").value("POST_NOT_FOUND"));
+    }
+
+    @Test
+    void findById_returns403_whenNotSubscribed() throws Exception {
+        authenticateAs(1L);
+        when(postService.findById(1L, 1L))
+                .thenThrow(new PostAccessDeniedException("POST_ACCESS_DENIED", "You are not subscribed to this post's theme"));
+
+        mockMvc.perform(get("/api/posts/1"))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.code").value("POST_ACCESS_DENIED"));
     }
 
     @Test

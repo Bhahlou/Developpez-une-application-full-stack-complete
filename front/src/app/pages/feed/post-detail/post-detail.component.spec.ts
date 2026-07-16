@@ -75,7 +75,7 @@ describe('PostDetailComponent', () => {
     expect(component['loading']()).toBe(false);
   });
 
-  it('shows an API error when loading the post fails', async () => {
+  it('shows an API error and redirects to the feed when loading the post fails', async () => {
     const error = new Error('failed');
     postService.getById.mockReturnValue(throwError(() => error));
 
@@ -83,6 +83,7 @@ describe('PostDetailComponent', () => {
 
     expect(snackbar.showApiError).toHaveBeenCalledWith(error);
     expect(component['loading']()).toBe(false);
+    expect(router.navigate).toHaveBeenCalledWith(['/feed']);
   });
 
   it('loads the comments matching the route id', async () => {
@@ -93,7 +94,7 @@ describe('PostDetailComponent', () => {
     expect(component['commentsLoading']()).toBe(false);
   });
 
-  it('shows an API error when loading the comments fails', async () => {
+  it('shows an API error and redirects to the feed when loading the comments fails', async () => {
     const error = new Error('failed');
     commentService.getByPostId.mockReturnValue(throwError(() => error));
 
@@ -101,6 +102,7 @@ describe('PostDetailComponent', () => {
 
     expect(snackbar.showApiError).toHaveBeenCalledWith(error);
     expect(component['commentsLoading']()).toBe(false);
+    expect(router.navigate).toHaveBeenCalledWith(['/feed']);
   });
 
   it('adds the created comment to the list on submit', async () => {

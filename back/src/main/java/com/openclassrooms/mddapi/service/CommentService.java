@@ -4,6 +4,7 @@ import java.util.List;
 
 import com.openclassrooms.mddapi.dto.CommentResponse;
 import com.openclassrooms.mddapi.dto.CreateCommentRequest;
+import com.openclassrooms.mddapi.exception.PostAccessDeniedException;
 import com.openclassrooms.mddapi.exception.PostNotFoundException;
 
 /**
@@ -13,20 +14,22 @@ public interface CommentService {
 
     /**
      * @param postId the post to list comments for
+     * @param userId the caller's id
      * @return the post's comments, oldest first
-     * @throws PostNotFoundException if no post matches {@code postId}
+     * @throws PostNotFoundException     if no post matches {@code postId}
+     * @throws PostAccessDeniedException if the caller is not subscribed to the post's theme
      */
-    List<CommentResponse> findByPostId(Long postId);
+    List<CommentResponse> findByPostId(Long postId, Long userId);
 
     /**
-     * Adds a comment to a post. A user may comment on any post, even on a
-     * theme they are no longer subscribed to.
+     * Adds a comment to a post, provided the caller is subscribed to its theme.
      *
      * @param userId  the author's id
      * @param postId  the post being commented on
      * @param request the comment content
      * @return the created comment
-     * @throws PostNotFoundException if no post matches {@code postId}
+     * @throws PostNotFoundException     if no post matches {@code postId}
+     * @throws PostAccessDeniedException if the caller is not subscribed to the post's theme
      */
     CommentResponse create(Long userId, Long postId, CreateCommentRequest request);
 }

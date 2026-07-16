@@ -31,6 +31,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.openclassrooms.mddapi.dto.CommentResponse;
 import com.openclassrooms.mddapi.dto.CreateCommentRequest;
 import com.openclassrooms.mddapi.exception.GlobalExceptionHandler;
+import com.openclassrooms.mddapi.exception.PostAccessDeniedException;
 import com.openclassrooms.mddapi.exception.PostNotFoundException;
 import com.openclassrooms.mddapi.model.User;
 import com.openclassrooms.mddapi.service.CommentService;
@@ -72,8 +73,9 @@ class CommentControllerTest {
 
     @Test
     void findByPostId_returns200WithComments() throws Exception {
+        authenticateAs(1L);
         CommentResponse response = new CommentResponse(1L, "Nice article", "johndoe", Instant.now());
-        when(commentService.findByPostId(1L)).thenReturn(List.of(response));
+        when(commentService.findByPostId(1L, 1L)).thenReturn(List.of(response));
 
         mockMvc.perform(get("/api/posts/1/comments"))
                 .andExpect(status().isOk())
@@ -84,11 +86,23 @@ class CommentControllerTest {
 
     @Test
     void findByPostId_returns404_whenPostDoesNotExist() throws Exception {
-        when(commentService.findByPostId(1L)).thenThrow(new PostNotFoundException("POST_NOT_FOUND", "Post not found"));
+        authenticateAs(1L);
+        when(commentService.findByPostId(1L, 1L)).thenThrow(new PostNotFoundException("POST_NOT_FOUND", "Post not found"));
 
         mockMvc.perform(get("/api/posts/1/comments"))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.code").value("POST_NOT_FOUND"));
+    }
+
+    @Test
+    void findByPostId_returns403_whenNotSubscribed() throws Exception {
+        authenticateAs(1L);
+        when(commentService.findByPostId(1L, 1L))
+                .thenThrow(new PostAccessDeniedException("POST_ACCESS_DENIED", "You are not subscribed to this post's theme"));
+
+        mockMvc.perform(get("/api/posts/1/comments"))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.code").value("POST_ACCESS_DENIED"));
     }
 
     @Test
@@ -130,5 +144,19 @@ class CommentControllerTest {
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.code").value("POST_NOT_FOUND"));
+    }
+
+    @Test
+    void create_returns403_whenNotSubscribed() throws Exception {
+        authenticateAs(1L);
+        CreateCommentRequest request = new CreateCommentRequest("Nice article");
+        when(commentService.create(eq(1L), eq(1L), any(CreateCommentRequest.class)))
+                .thenThrow(new PostAccessDeniedException("POST_ACCESS_DENIED", "You are not subscribed to this post's theme"));
+
+        mockMvc.perform(post("/api/posts/1/comments")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.code").value("POST_ACCESS_DENIED"));
     }
 }

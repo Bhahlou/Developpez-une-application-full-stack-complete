@@ -9,6 +9,7 @@ describe('Post detail', () => {
     cy.registerUser(user).then((response) => {
       const token = response.body.accessToken;
       cy.createTheme({ title: 'Angular', description: 'Tout sur Angular.' }, token).then((theme) => {
+        cy.subscribeToTheme(theme.body.id, token);
         cy.createPost({ themeId: theme.body.id, title: 'Signals 101', content: 'Introduction aux signals.' }, token).then(
           (post) => {
             cy.createComment(post.body.id, 'Super article !', token);
@@ -29,6 +30,7 @@ describe('Post detail', () => {
     cy.registerUser(user).then((response) => {
       const token = response.body.accessToken;
       cy.createTheme({ title: 'Angular', description: 'Tout sur Angular.' }, token).then((theme) => {
+        cy.subscribeToTheme(theme.body.id, token);
         cy.createPost({ themeId: theme.body.id, title: 'Signals 101', content: 'Introduction aux signals.' }, token).then(
           (post) => {
             cy.visitAuthenticatedAs(`/feed/${post.body.id}`, response.body);
@@ -48,6 +50,7 @@ describe('Post detail', () => {
     cy.registerUser(user).then((response) => {
       const token = response.body.accessToken;
       cy.createTheme({ title: 'Angular', description: 'Tout sur Angular.' }, token).then((theme) => {
+        cy.subscribeToTheme(theme.body.id, token);
         cy.createPost({ themeId: theme.body.id, title: 'Signals 101', content: 'Introduction aux signals.' }, token).then(
           (post) => {
             cy.visitAuthenticatedAs(`/feed/${post.body.id}`, response.body);
@@ -65,6 +68,7 @@ describe('Post detail', () => {
     cy.registerUser(user).then((response) => {
       const token = response.body.accessToken;
       cy.createTheme({ title: 'Angular', description: 'Tout sur Angular.' }, token).then((theme) => {
+        cy.subscribeToTheme(theme.body.id, token);
         cy.createPost({ themeId: theme.body.id, title: 'Signals 101', content: 'Introduction aux signals.' }, token).then(
           (post) => {
             cy.visitAuthenticatedAs(`/feed/${post.body.id}`, response.body);
@@ -78,9 +82,26 @@ describe('Post detail', () => {
     cy.url().should('match', /\/feed$/);
   });
 
-  it('shows an error when the post does not exist', () => {
+  it('shows an error and redirects to the feed when the post does not exist', () => {
     cy.authenticatedVisit('/feed/999999', user);
 
     cy.contains("Cet article n'existe plus.").should('be.visible');
+    cy.url().should('match', /\/feed$/);
+  });
+
+  it('shows an error and redirects to the feed when not subscribed to the post theme', () => {
+    cy.registerUser(user).then((response) => {
+      const token = response.body.accessToken;
+      cy.createTheme({ title: 'Angular', description: 'Tout sur Angular.' }, token).then((theme) => {
+        cy.createPost({ themeId: theme.body.id, title: 'Signals 101', content: 'Introduction aux signals.' }, token).then(
+          (post) => {
+            cy.visitAuthenticatedAs(`/feed/${post.body.id}`, response.body);
+          },
+        );
+      });
+    });
+
+    cy.contains("Vous n'êtes pas abonné au thème de cet article.").should('be.visible');
+    cy.url().should('match', /\/feed$/);
   });
 });

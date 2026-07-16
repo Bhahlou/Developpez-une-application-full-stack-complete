@@ -6,12 +6,14 @@ import org.springframework.stereotype.Service;
 
 import com.openclassrooms.mddapi.dto.CommentResponse;
 import com.openclassrooms.mddapi.dto.CreateCommentRequest;
+import com.openclassrooms.mddapi.exception.PostAccessDeniedException;
 import com.openclassrooms.mddapi.exception.PostNotFoundException;
 import com.openclassrooms.mddapi.model.Comment;
 import com.openclassrooms.mddapi.model.Post;
 import com.openclassrooms.mddapi.model.User;
 import com.openclassrooms.mddapi.repository.CommentRepository;
 import com.openclassrooms.mddapi.repository.PostRepository;
+import com.openclassrooms.mddapi.repository.SubscriptionRepository;
 import com.openclassrooms.mddapi.repository.UserRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -24,13 +26,14 @@ public class CommentServiceImpl implements CommentService {
 
     private final CommentRepository commentRepository;
     private final PostRepository postRepository;
+    private final SubscriptionRepository subscriptionRepository;
     private final UserRepository userRepository;
 
     @Override
-    public List<CommentResponse> findByPostId(Long postId) {
-        if (!postRepository.existsById(postId)) {
-            throw new PostNotFoundException("POST_NOT_FOUND", "Post not found");
-        }
+    public List<CommentResponse> findByPostId(Long postId, Long userId) {
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> new PostNotFoundException("POST_NOT_FOUND", "Post not found"));
+        requireSubscribed(userId, post);
 
         return commentRepository.findByPost_IdOrderByCreatedAtAsc(postId).stream()
                 .map(CommentServiceImpl::toResponse)
@@ -41,6 +44,7 @@ public class CommentServiceImpl implements CommentService {
     public CommentResponse create(Long userId, Long postId, CreateCommentRequest request) {
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new PostNotFoundException("POST_NOT_FOUND", "Post not found"));
+        requireSubscribed(userId, post);
         User author = userRepository.getReferenceById(userId);
 
         Comment comment = Comment.builder()
@@ -52,6 +56,17 @@ public class CommentServiceImpl implements CommentService {
         log.info("Comment created: id={}, postId={}, authorId={}", comment.getId(), postId, userId);
 
         return toResponse(comment);
+    }
+
+    /**
+     * @param userId the caller's id
+     * @param post   the post being accessed
+     * @throws PostAccessDeniedException if the caller is not subscribed to the post's theme
+     */
+    private void requireSubscribed(Long userId, Post post) {
+        if (!subscriptionRepository.existsByUserIdAndThemeId(userId, post.getTheme().getId())) {
+            throw new PostAccessDeniedException("POST_ACCESS_DENIED", "You are not subscribed to this post's theme");
+        }
     }
 
     /**

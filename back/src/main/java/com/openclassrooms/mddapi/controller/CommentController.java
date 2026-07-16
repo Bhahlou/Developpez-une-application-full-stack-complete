@@ -31,18 +31,20 @@ public class CommentController {
     private final CommentService commentService;
 
     /**
-     * Lists the comments of a post.
+     * Lists the comments of a post, provided the caller is subscribed to its theme.
      *
-     * @param postId the post to list comments for
+     * @param principal the authenticated user, resolved from the JWT
+     * @param postId    the post to list comments for
      * @return 200 with the comments, oldest first
      */
     @GetMapping
-    public ResponseEntity<List<CommentResponse>> findByPostId(@PathVariable Long postId) {
-        return ResponseEntity.ok(commentService.findByPostId(postId));
+    public ResponseEntity<List<CommentResponse>> findByPostId(@AuthenticationPrincipal UserPrincipal principal,
+            @PathVariable Long postId) {
+        return ResponseEntity.ok(commentService.findByPostId(postId, principal.getUser().getId()));
     }
 
     /**
-     * Adds a comment to a post.
+     * Adds a comment to a post, provided the caller is subscribed to its theme.
      *
      * @param principal the authenticated user, resolved from the JWT
      * @param postId    the post being commented on

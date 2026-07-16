@@ -18,6 +18,7 @@ import com.openclassrooms.mddapi.model.Theme;
 import com.openclassrooms.mddapi.model.User;
 import com.openclassrooms.mddapi.repository.CommentRepository;
 import com.openclassrooms.mddapi.repository.PostRepository;
+import com.openclassrooms.mddapi.repository.SubscriptionRepository;
 import com.openclassrooms.mddapi.repository.ThemeRepository;
 import com.openclassrooms.mddapi.repository.UserRepository;
 
@@ -25,14 +26,16 @@ class CommentIntegrationTest extends AbstractIntegrationTest {
 
     private final CommentRepository commentRepository;
     private final PostRepository postRepository;
+    private final SubscriptionRepository subscriptionRepository;
     private final ThemeRepository themeRepository;
 
     @Autowired
     CommentIntegrationTest(MockMvc mockMvc, UserRepository userRepository, CommentRepository commentRepository,
-            PostRepository postRepository, ThemeRepository themeRepository) {
+            PostRepository postRepository, SubscriptionRepository subscriptionRepository, ThemeRepository themeRepository) {
         super(mockMvc, userRepository);
         this.commentRepository = commentRepository;
         this.postRepository = postRepository;
+        this.subscriptionRepository = subscriptionRepository;
         this.themeRepository = themeRepository;
     }
 
@@ -40,6 +43,7 @@ class CommentIntegrationTest extends AbstractIntegrationTest {
     void cleanUp() {
         commentRepository.deleteAll();
         postRepository.deleteAll();
+        subscriptionRepository.deleteAll();
         themeRepository.deleteAll();
         userRepository.deleteAll();
     }
@@ -47,7 +51,7 @@ class CommentIntegrationTest extends AbstractIntegrationTest {
     @Test
     void create_persistsComment_andReturns201WithAuthor() throws Exception {
         AuthResponse tokens = registerUser("johndoe", "john@doe.com", "Passw0rd!");
-        Post savedPost = createPost("johndoe");
+        Post savedPost = createPostAndSubscribe("johndoe", tokens);
 
         CreateCommentRequest request = new CreateCommentRequest("Great read, thanks!");
         mockMvc.perform(post("/api/posts/" + savedPost.getId() + "/comments")
@@ -57,6 +61,20 @@ class CommentIntegrationTest extends AbstractIntegrationTest {
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.content").value("Great read, thanks!"))
                 .andExpect(jsonPath("$.authorUsername").value("johndoe"));
+    }
+
+    @Test
+    void create_returns403_whenNotSubscribedToTheme() throws Exception {
+        AuthResponse tokens = registerUser("johndoe", "john@doe.com", "Passw0rd!");
+        Post savedPost = createPost("johndoe");
+
+        CreateCommentRequest request = new CreateCommentRequest("Great read, thanks!");
+        mockMvc.perform(post("/api/posts/" + savedPost.getId() + "/comments")
+                        .header("Authorization", "Bearer " + tokens.accessToken())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.code").value("POST_ACCESS_DENIED"));
     }
 
     @Test
@@ -88,7 +106,7 @@ class CommentIntegrationTest extends AbstractIntegrationTest {
     @Test
     void findByPostId_returnsCommentsInChronologicalOrder() throws Exception {
         AuthResponse tokens = registerUser("johndoe", "john@doe.com", "Passw0rd!");
-        Post savedPost = createPost("johndoe");
+        Post savedPost = createPostAndSubscribe("johndoe", tokens);
         addComment(savedPost, tokens, "First comment");
         addComment(savedPost, tokens, "Second comment");
 
@@ -98,6 +116,17 @@ class CommentIntegrationTest extends AbstractIntegrationTest {
                 .andExpect(jsonPath("$.length()").value(2))
                 .andExpect(jsonPath("$[0].content").value("First comment"))
                 .andExpect(jsonPath("$[1].content").value("Second comment"));
+    }
+
+    @Test
+    void findByPostId_returns403_whenNotSubscribedToTheme() throws Exception {
+        AuthResponse tokens = registerUser("johndoe", "john@doe.com", "Passw0rd!");
+        Post savedPost = createPost("johndoe");
+
+        mockMvc.perform(get("/api/posts/" + savedPost.getId() + "/comments")
+                        .header("Authorization", "Bearer " + tokens.accessToken()))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.code").value("POST_ACCESS_DENIED"));
     }
 
     @Test
@@ -114,6 +143,13 @@ class CommentIntegrationTest extends AbstractIntegrationTest {
         User author = userRepository.findByUsernameOrEmail(authorUsername, authorUsername).orElseThrow();
         Theme theme = themeRepository.save(Theme.builder().title("Java").description("The JVM language").build());
         return postRepository.save(Post.builder().title("Title").content("Content").theme(theme).author(author).build());
+    }
+
+    private Post createPostAndSubscribe(String authorUsername, AuthResponse tokens) throws Exception {
+        Post savedPost = createPost(authorUsername);
+        mockMvc.perform(post("/api/subscriptions/" + savedPost.getTheme().getId())
+                .header("Authorization", "Bearer " + tokens.accessToken()));
+        return savedPost;
     }
 
     private void addComment(Post targetPost, AuthResponse tokens, String content) throws Exception {

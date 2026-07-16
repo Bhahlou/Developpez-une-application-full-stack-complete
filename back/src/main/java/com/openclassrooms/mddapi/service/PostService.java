@@ -5,6 +5,7 @@ import org.springframework.data.domain.Sort;
 import com.openclassrooms.mddapi.dto.CreatePostRequest;
 import com.openclassrooms.mddapi.dto.PostPageResponse;
 import com.openclassrooms.mddapi.dto.PostResponse;
+import com.openclassrooms.mddapi.exception.PostAccessDeniedException;
 import com.openclassrooms.mddapi.exception.PostNotFoundException;
 import com.openclassrooms.mddapi.exception.ThemeNotFoundException;
 
@@ -35,11 +36,13 @@ public interface PostService {
     PostResponse create(Long userId, CreatePostRequest request);
 
     /**
-     * Returns a single post regardless of the caller's subscriptions.
+     * Returns a single post, provided the caller is subscribed to its theme.
      *
-     * @param id the post id
+     * @param id     the post id
+     * @param userId the caller's id
      * @return the post detail
-     * @throws PostNotFoundException if no post matches {@code id}
+     * @throws PostNotFoundException    if no post matches {@code id}
+     * @throws PostAccessDeniedException if the caller is not subscribed to the post's theme
      */
-    PostResponse findById(Long id);
+    PostResponse findById(Long id, Long userId);
 }
