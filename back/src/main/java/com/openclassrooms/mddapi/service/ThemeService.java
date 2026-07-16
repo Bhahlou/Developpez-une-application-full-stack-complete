@@ -13,6 +13,7 @@ import com.openclassrooms.mddapi.repository.SubscriptionRepository;
 import com.openclassrooms.mddapi.repository.ThemeRepository;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Theme catalog: listing (with subscription status) and creation.
@@ -21,6 +22,7 @@ import lombok.RequiredArgsConstructor;
  * validated with the training mentor, so the app can be exercised end-to-end
  * without a manual database seed.
  */
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class ThemeService {
@@ -56,6 +58,7 @@ public class ThemeService {
                 .description(request.description())
                 .build();
         themeRepository.save(theme);
+        log.info("Theme created: id={}, title={}", theme.getId(), theme.getTitle());
 
         return toResponse(theme, false);
     }

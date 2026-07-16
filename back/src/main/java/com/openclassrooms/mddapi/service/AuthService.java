@@ -15,10 +15,12 @@ import com.openclassrooms.mddapi.model.User;
 import com.openclassrooms.mddapi.repository.UserRepository;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Registration, login, token refresh/logout, and profile updates.
  */
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class AuthService {
@@ -50,6 +52,7 @@ public class AuthService {
                 .password(passwordEncoder.encode(request.password()))
                 .build();
         userRepository.save(user);
+        log.info("New user registered: id={}, username={}", user.getId(), user.getUsername());
 
         return buildAuthResponse(user);
     }
@@ -67,6 +70,7 @@ public class AuthService {
 
         User user = userRepository.findByUsernameOrEmail(request.identifier(), request.identifier())
                 .orElseThrow();
+        log.info("User logged in: id={}, username={}", user.getId(), user.getUsername());
 
         return buildAuthResponse(user);
     }
@@ -80,6 +84,7 @@ public class AuthService {
      */
     public AuthResponse refresh(String refreshToken) {
         User user = refreshTokenService.validate(refreshToken);
+        log.debug("Token refreshed for user: id={}, username={}", user.getId(), user.getUsername());
         return buildAuthResponse(user);
     }
 
@@ -93,6 +98,7 @@ public class AuthService {
         refreshTokenService.validate(refreshToken);
         User user = userRepository.findByRefreshToken(refreshToken).orElseThrow();
         refreshTokenService.revoke(user);
+        log.info("User logged out: id={}, username={}", user.getId(), user.getUsername());
     }
 
     /**
@@ -126,6 +132,7 @@ public class AuthService {
             user.setPassword(passwordEncoder.encode(request.newPassword()));
         }
         userRepository.save(user);
+        log.info("User profile updated: id={}, username={}", user.getId(), user.getUsername());
 
         return buildAuthResponse(user);
     }

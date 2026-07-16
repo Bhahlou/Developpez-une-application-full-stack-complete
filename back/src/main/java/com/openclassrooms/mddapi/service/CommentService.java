@@ -15,10 +15,12 @@ import com.openclassrooms.mddapi.repository.PostRepository;
 import com.openclassrooms.mddapi.repository.UserRepository;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Comments attached to posts.
  */
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class CommentService {
@@ -63,6 +65,7 @@ public class CommentService {
                 .author(author)
                 .build();
         commentRepository.save(comment);
+        log.info("Comment created: id={}, postId={}, authorId={}", comment.getId(), postId, userId);
 
         return toResponse(comment);
     }

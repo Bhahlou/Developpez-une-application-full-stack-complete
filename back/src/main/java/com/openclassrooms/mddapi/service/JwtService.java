@@ -12,12 +12,15 @@ import com.auth0.jwt.interfaces.JWTVerifier;
 import com.openclassrooms.mddapi.config.JwtProperties;
 import com.openclassrooms.mddapi.model.User;
 
+import lombok.extern.slf4j.Slf4j;
+
 /**
  * Issues and verifies HMAC-signed JWT access tokens.
  * <p>
  * Refresh tokens are handled separately by {@link RefreshTokenService}: they
  * are opaque random values persisted on the {@link User} entity, not JWTs.
  */
+@Slf4j
 @Service
 public class JwtService {
 
@@ -67,7 +70,8 @@ public class JwtService {
         try {
             verifier.verify(token);
             return true;
-        } catch (JWTVerificationException _) {
+        } catch (JWTVerificationException e) {
+            log.debug("JWT verification failed: {}", e.getMessage());
             return false;
         }
     }

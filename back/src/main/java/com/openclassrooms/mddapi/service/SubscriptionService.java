@@ -15,10 +15,12 @@ import com.openclassrooms.mddapi.repository.ThemeRepository;
 import com.openclassrooms.mddapi.repository.UserRepository;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Theme subscriptions of a user.
  */
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class SubscriptionService {
@@ -59,6 +61,7 @@ public class SubscriptionService {
                 .theme(theme)
                 .build();
         subscriptionRepository.save(subscription);
+        log.info("User subscribed to theme: userId={}, themeId={}", userId, themeId);
     }
 
     /**
@@ -73,6 +76,7 @@ public class SubscriptionService {
                 .orElseThrow(() -> new SubscriptionNotFoundException("SUBSCRIPTION_NOT_FOUND", "Subscription not found"));
 
         subscriptionRepository.delete(subscription);
+        log.info("User unsubscribed from theme: userId={}, themeId={}", userId, themeId);
     }
 
     /**

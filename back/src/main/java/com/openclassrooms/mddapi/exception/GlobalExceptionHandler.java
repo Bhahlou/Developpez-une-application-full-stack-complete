@@ -12,6 +12,8 @@ import org.springframework.web.context.request.WebRequest;
 
 import com.openclassrooms.mddapi.dto.ApiErrorResponse;
 
+import lombok.extern.slf4j.Slf4j;
+
 /**
  * Central translation of domain exceptions into {@link ApiErrorResponse} bodies.
  * <p>
@@ -19,6 +21,7 @@ import com.openclassrooms.mddapi.dto.ApiErrorResponse;
  * {@code code}, without leaking internal details (stack traces, SQL, etc.) to
  * the client.
  */
+@Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
@@ -128,13 +131,16 @@ public class GlobalExceptionHandler {
      * @return the fully populated error response, wrapped with the given status
      */
     private ResponseEntity<ApiErrorResponse> build(HttpStatus status, String code, String message, WebRequest request) {
+        String path = request.getDescription(false).replace("uri=", "");
+        log.warn("Request failed [{}] {} - {} ({})", status.value(), path, message, code);
+
         ApiErrorResponse body = new ApiErrorResponse(
                 Instant.now(),
                 status.value(),
                 status.getReasonPhrase(),
                 code,
                 message,
-                request.getDescription(false).replace("uri=", ""));
+                path);
         return ResponseEntity.status(status).body(body);
     }
 }

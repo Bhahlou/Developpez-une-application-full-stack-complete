@@ -23,10 +23,12 @@ import com.openclassrooms.mddapi.repository.ThemeRepository;
 import com.openclassrooms.mddapi.repository.UserRepository;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Articles (posts): feed retrieval, detail lookup and creation.
  */
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class PostService {
@@ -80,6 +82,7 @@ public class PostService {
                 .author(author)
                 .build();
         postRepository.save(post);
+        log.info("Post created: id={}, themeId={}, authorId={}", post.getId(), theme.getId(), userId);
 
         return toResponse(post);
     }
