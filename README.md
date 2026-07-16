@@ -153,6 +153,8 @@ Toutes les routes sont préfixées par `/api` et protégées par JWT Bearer, à 
 | `/api/posts/{id}` | GET | Détail d'un article |
 | `/api/posts/{postId}/comments` | GET / POST | Commentaires d'un article |
 
+Documentation interactive (Swagger UI) une fois l'API lancée : [http://localhost:8080/swagger-ui.html](http://localhost:8080/swagger-ui.html) — spécification OpenAPI brute sur `/v3/api-docs`.
+
 ## Sécurité
 
 - Mots de passe hashés avec BCrypt, jamais renvoyés en clair.
@@ -173,7 +175,7 @@ Toutes les routes sont préfixées par `/api` et protégées par JWT Bearer, à 
 │       ├── model/         # Entités JPA
 │       ├── dto/           # Contrats d'échange (records)
 │       ├── exception/     # Exceptions métier + gestion centralisée
-│       └── config/        # Sécurité, JWT
+│       └── config/        # Sécurité, JWT, OpenAPI
 └── front/    # SPA Angular 22
     └── src/app/
         ├── core/          # Services, guards, interceptors, store

@@ -36,8 +36,9 @@ import lombok.RequiredArgsConstructor;
  * session to protect), CORS restricted to the front-end origin, a JSON
  * {@link AuthenticationEntryPoint} for unauthenticated requests, and
  * {@link JwtAuthenticationFilter} wired in before the standard username/password
- * filter. Only the auth endpoints (register/login/refresh/logout) are public;
- * everything else requires a valid bearer token.
+ * filter. Only the auth endpoints (register/login/refresh/logout) and the
+ * Swagger/OpenAPI documentation are public; everything else requires a valid
+ * bearer token.
  */
 @Configuration
 @EnableWebSecurity
@@ -65,6 +66,8 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/register", "/api/auth/login", "/api/auth/refresh",
                                 "/api/auth/logout")
+                        .permitAll()
+                        .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html")
                         .permitAll()
                         .anyRequest().authenticated())
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
