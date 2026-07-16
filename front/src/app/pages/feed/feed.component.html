@@ -27,5 +27,13 @@
         </a>
       }
     </div>
+
+    @if (hasNext()) {
+      <output #sentinel class="load-more">
+        @if (loadingMore()) {
+          <mat-spinner diameter="32"></mat-spinner>
+        }
+      </output>
+    }
   }
 </div>

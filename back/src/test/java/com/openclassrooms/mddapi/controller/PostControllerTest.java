@@ -30,6 +30,7 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.openclassrooms.mddapi.dto.CreatePostRequest;
+import com.openclassrooms.mddapi.dto.PostPageResponse;
 import com.openclassrooms.mddapi.dto.PostResponse;
 import com.openclassrooms.mddapi.exception.GlobalExceptionHandler;
 import com.openclassrooms.mddapi.exception.PostNotFoundException;
@@ -76,24 +77,41 @@ class PostControllerTest {
     void findFeed_returns200WithPosts_sortedDescByDefault() throws Exception {
         authenticateAs(1L);
         PostResponse response = new PostResponse(1L, "Title", "Content", 2L, "Backend", "johndoe", Instant.now());
-        when(postService.findFeed(1L, Sort.Direction.DESC)).thenReturn(List.of(response));
+        when(postService.findFeed(1L, Sort.Direction.DESC, 0, 10))
+                .thenReturn(new PostPageResponse(List.of(response), 0, 10, 1, false));
 
         mockMvc.perform(get("/api/posts"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].id").value(1))
-                .andExpect(jsonPath("$[0].title").value("Title"))
-                .andExpect(jsonPath("$[0].themeTitle").value("Backend"))
-                .andExpect(jsonPath("$[0].authorUsername").value("johndoe"));
+                .andExpect(jsonPath("$.content[0].id").value(1))
+                .andExpect(jsonPath("$.content[0].title").value("Title"))
+                .andExpect(jsonPath("$.content[0].themeTitle").value("Backend"))
+                .andExpect(jsonPath("$.content[0].authorUsername").value("johndoe"))
+                .andExpect(jsonPath("$.hasNext").value(false));
     }
 
     @Test
     void findFeed_returns200WithPosts_sortedAscWhenRequested() throws Exception {
         authenticateAs(1L);
-        when(postService.findFeed(1L, Sort.Direction.ASC)).thenReturn(List.of());
+        when(postService.findFeed(1L, Sort.Direction.ASC, 0, 10))
+                .thenReturn(new PostPageResponse(List.of(), 0, 10, 0, false));
 
         mockMvc.perform(get("/api/posts").param("sort", "asc"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$").isArray());
+                .andExpect(jsonPath("$.content").isArray());
+    }
+
+    @Test
+    void findFeed_forwardsPageAndSizeParams() throws Exception {
+        authenticateAs(1L);
+        when(postService.findFeed(1L, Sort.Direction.DESC, 2, 5))
+                .thenReturn(new PostPageResponse(List.of(), 2, 5, 12, true));
+
+        mockMvc.perform(get("/api/posts").param("page", "2").param("size", "5"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.page").value(2))
+                .andExpect(jsonPath("$.size").value(5))
+                .andExpect(jsonPath("$.totalElements").value(12))
+                .andExpect(jsonPath("$.hasNext").value(true));
     }
 
     @Test

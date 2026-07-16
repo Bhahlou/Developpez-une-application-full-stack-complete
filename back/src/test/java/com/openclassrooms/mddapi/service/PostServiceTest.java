@@ -17,9 +17,14 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 
 import com.openclassrooms.mddapi.dto.CreatePostRequest;
+import com.openclassrooms.mddapi.dto.PostPageResponse;
 import com.openclassrooms.mddapi.dto.PostResponse;
 import com.openclassrooms.mddapi.exception.PostNotFoundException;
 import com.openclassrooms.mddapi.exception.ThemeNotFoundException;
@@ -54,30 +59,31 @@ class PostServiceTest {
     }
 
     @Test
-    void findFeed_returnsEmptyList_whenUserHasNoSubscriptions() {
+    void findFeed_returnsEmptyPage_whenUserHasNoSubscriptions() {
         when(subscriptionRepository.findThemeIdsByUserId(42L)).thenReturn(Set.of());
 
-        List<PostResponse> result = postService.findFeed(42L, Sort.Direction.DESC);
+        PostPageResponse result = postService.findFeed(42L, Sort.Direction.DESC, 0, 10);
 
-        assertThat(result).isEmpty();
-        verify(postRepository, never()).findByTheme_IdIn(anyCollection(), any(Sort.class));
+        assertThat(result).isEqualTo(new PostPageResponse(List.of(), 0, 10, 0, false));
+        verify(postRepository, never()).findByTheme_IdIn(anyCollection(), any(Pageable.class));
     }
 
     @Test
-    void findFeed_returnsPostsFromSubscribedThemes() {
+    void findFeed_returnsPageOfPostsFromSubscribedThemes() {
         Theme theme = Theme.builder().id(1L).title("Backend").description("desc").build();
         User author = User.builder().id(2L).username("johndoe").email("john@doe.com").password("encoded").build();
         Instant createdAt = Instant.parse("2026-01-01T00:00:00Z");
         Post post = Post.builder().id(1L).title("t").content("c").theme(theme).author(author).createdAt(createdAt)
                 .build();
+        Pageable pageable = PageRequest.of(0, 10, Sort.by(Sort.Direction.DESC, "createdAt"));
+        Page<Post> page = new PageImpl<>(List.of(post), pageable, 1);
         when(subscriptionRepository.findThemeIdsByUserId(42L)).thenReturn(Set.of(1L));
-        when(postRepository.findByTheme_IdIn(Set.of(1L), Sort.by(Sort.Direction.DESC, "createdAt")))
-                .thenReturn(List.of(post));
+        when(postRepository.findByTheme_IdIn(Set.of(1L), pageable)).thenReturn(page);
 
-        List<PostResponse> result = postService.findFeed(42L, Sort.Direction.DESC);
+        PostPageResponse result = postService.findFeed(42L, Sort.Direction.DESC, 0, 10);
 
-        assertThat(result).containsExactly(
-                new PostResponse(1L, "t", "c", 1L, "Backend", "johndoe", createdAt));
+        assertThat(result).isEqualTo(new PostPageResponse(
+                List.of(new PostResponse(1L, "t", "c", 1L, "Backend", "johndoe", createdAt)), 0, 10, 1, false));
     }
 
     @Test

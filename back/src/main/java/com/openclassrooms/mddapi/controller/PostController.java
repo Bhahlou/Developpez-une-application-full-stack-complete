@@ -1,7 +1,5 @@
 package com.openclassrooms.mddapi.controller;
 
-import java.util.List;
-
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -15,6 +13,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.openclassrooms.mddapi.dto.CreatePostRequest;
+import com.openclassrooms.mddapi.dto.PostPageResponse;
 import com.openclassrooms.mddapi.dto.PostResponse;
 import com.openclassrooms.mddapi.service.PostService;
 import com.openclassrooms.mddapi.service.UserPrincipal;
@@ -33,18 +32,22 @@ public class PostController {
     private final PostService postService;
 
     /**
-     * Returns the current user's feed: posts from the themes they are
-     * subscribed to, sorted by creation date.
+     * Returns a page of the current user's feed: posts from the themes they
+     * are subscribed to, sorted by creation date.
      *
      * @param principal the authenticated user, resolved from the JWT
      * @param sort      {@code "asc"} for oldest first, anything else for newest first
-     * @return 200 with the matching posts
+     * @param page      the zero-based page index to fetch
+     * @param size      the number of posts per page
+     * @return 200 with the matching page of posts
      */
     @GetMapping
-    public ResponseEntity<List<PostResponse>> findFeed(@AuthenticationPrincipal UserPrincipal principal,
-            @RequestParam(defaultValue = "desc") String sort) {
+    public ResponseEntity<PostPageResponse> findFeed(@AuthenticationPrincipal UserPrincipal principal,
+            @RequestParam(defaultValue = "desc") String sort,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
         Sort.Direction direction = "asc".equalsIgnoreCase(sort) ? Sort.Direction.ASC : Sort.Direction.DESC;
-        return ResponseEntity.ok(postService.findFeed(principal.getUser().getId(), direction));
+        return ResponseEntity.ok(postService.findFeed(principal.getUser().getId(), direction, page, size));
     }
 
     /**

@@ -128,9 +128,11 @@ class PostIntegrationTest extends AbstractIntegrationTest {
 
         mockMvc.perform(get("/api/posts").header("Authorization", "Bearer " + tokens.accessToken()))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(2))
-                .andExpect(jsonPath("$[0].title").value("Newer post"))
-                .andExpect(jsonPath("$[1].title").value("Older post"));
+                .andExpect(jsonPath("$.content.length()").value(2))
+                .andExpect(jsonPath("$.content[0].title").value("Newer post"))
+                .andExpect(jsonPath("$.content[1].title").value("Older post"))
+                .andExpect(jsonPath("$.totalElements").value(2))
+                .andExpect(jsonPath("$.hasNext").value(false));
     }
 
     @Test
@@ -149,17 +151,47 @@ class PostIntegrationTest extends AbstractIntegrationTest {
         mockMvc.perform(get("/api/posts").param("sort", "asc")
                         .header("Authorization", "Bearer " + tokens.accessToken()))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].title").value("Older post"))
-                .andExpect(jsonPath("$[1].title").value("Newer post"));
+                .andExpect(jsonPath("$.content[0].title").value("Older post"))
+                .andExpect(jsonPath("$.content[1].title").value("Newer post"));
     }
 
     @Test
-    void findFeed_returnsEmptyList_whenUserHasNoSubscriptions() throws Exception {
+    void findFeed_returnsEmptyPage_whenUserHasNoSubscriptions() throws Exception {
         AuthResponse tokens = registerUser("johndoe", "john@doe.com", "Passw0rd!");
 
         mockMvc.perform(get("/api/posts").header("Authorization", "Bearer " + tokens.accessToken()))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(0));
+                .andExpect(jsonPath("$.content.length()").value(0))
+                .andExpect(jsonPath("$.hasNext").value(false));
+    }
+
+    @Test
+    void findFeed_paginatesAcrossSuccessivePages() throws Exception {
+        AuthResponse tokens = registerUser("johndoe", "john@doe.com", "Passw0rd!");
+        User author = userRepository.findByUsernameOrEmail("johndoe", "johndoe").orElseThrow();
+        Theme theme = themeRepository.save(Theme.builder().title("Java").description("The JVM language").build());
+        mockMvc.perform(post("/api/subscriptions/" + theme.getId())
+                .header("Authorization", "Bearer " + tokens.accessToken()));
+
+        for (int i = 0; i < 3; i++) {
+            postRepository.save(Post.builder().title("Post " + i).content("Content").theme(theme).author(author)
+                    .createdAt(Instant.now().minusSeconds(120 - i)).build());
+        }
+
+        mockMvc.perform(get("/api/posts").param("size", "2")
+                        .header("Authorization", "Bearer " + tokens.accessToken()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content.length()").value(2))
+                .andExpect(jsonPath("$.content[0].title").value("Post 2"))
+                .andExpect(jsonPath("$.content[1].title").value("Post 1"))
+                .andExpect(jsonPath("$.hasNext").value(true));
+
+        mockMvc.perform(get("/api/posts").param("page", "1").param("size", "2")
+                        .header("Authorization", "Bearer " + tokens.accessToken()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content.length()").value(1))
+                .andExpect(jsonPath("$.content[0].title").value("Post 0"))
+                .andExpect(jsonPath("$.hasNext").value(false));
     }
 
     @Test

@@ -30,6 +30,40 @@ describe('Feed', () => {
     cy.contains('Introduction aux signals.');
   });
 
+  it('loads more posts by scrolling once the sentinel becomes visible', () => {
+    // A narrow viewport keeps the single-column layout tall enough that the
+    // first page can't fit on screen — on a wide viewport the sentinel can
+    // already sit within the preload margin on initial render, firing the
+    // second page before any scroll happens (and before this intercept, if
+    // registered after navigation, could even catch it).
+    cy.viewport('iphone-8');
+    cy.intercept('GET', '**/api/posts*').as('getPosts');
+
+    cy.registerUser(user).then((response) => {
+      const token = response.body.accessToken;
+      cy.createTheme({ title: 'Angular', description: 'Tout sur Angular.' }, token).then((theme) => {
+        cy.subscribeToTheme(theme.body.id, token);
+        for (let i = 1; i <= 15; i++) {
+          cy.createPost({ themeId: theme.body.id, title: `Post ${i}`, content: `Content ${i}.` }, token);
+        }
+      });
+      cy.visitAuthenticatedAs('/feed', response.body);
+    });
+
+    cy.wait('@getPosts').its('request.url').should('include', 'page=0');
+    cy.get('.post-card').should('have.length', 10);
+
+    cy.scrollTo('bottom');
+    cy.wait('@getPosts').its('request.url').should('include', 'page=1');
+
+    cy.get('.post-card').should('have.length', 15);
+    cy.get('.post-card h2').then(($titles) => {
+      const uniqueTitles = new Set($titles.toArray().map((el) => el.textContent));
+      expect(uniqueTitles.size).to.eq(15);
+    });
+    cy.get('.load-more').should('not.exist');
+  });
+
   it('toggles the sort order', () => {
     cy.registerUser(user).then((response) => {
       const token = response.body.accessToken;

@@ -36,6 +36,12 @@
   }
 }
 
+.load-more {
+  display: flex;
+  justify-content: center;
+  padding: 24px 0;
+}
+
 .post-card {
   border: 1px solid rgba(0, 0, 0, 0.12);
   border-radius: 8px;

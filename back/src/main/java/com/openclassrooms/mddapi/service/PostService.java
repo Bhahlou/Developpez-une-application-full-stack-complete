@@ -3,10 +3,14 @@ package com.openclassrooms.mddapi.service;
 import java.util.List;
 import java.util.Set;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import com.openclassrooms.mddapi.dto.CreatePostRequest;
+import com.openclassrooms.mddapi.dto.PostPageResponse;
 import com.openclassrooms.mddapi.dto.PostResponse;
 import com.openclassrooms.mddapi.exception.PostNotFoundException;
 import com.openclassrooms.mddapi.exception.ThemeNotFoundException;
@@ -33,21 +37,27 @@ public class PostService {
     private final UserRepository userRepository;
 
     /**
-     * Builds the current user's feed from the themes they are subscribed to.
+     * Builds a page of the current user's feed from the themes they are subscribed to.
      *
      * @param userId    the current user's id
      * @param direction sort direction applied to the creation date
-     * @return the matching posts, or an empty list if the user has no subscriptions
+     * @param page      the zero-based page index to fetch
+     * @param size      the number of posts per page
+     * @return the matching page of posts, or an empty page if the user has no subscriptions
      */
-    public List<PostResponse> findFeed(Long userId, Sort.Direction direction) {
+    public PostPageResponse findFeed(Long userId, Sort.Direction direction, int page, int size) {
         Set<Long> subscribedThemeIds = subscriptionRepository.findThemeIdsByUserId(userId);
         if (subscribedThemeIds.isEmpty()) {
-            return List.of();
+            return new PostPageResponse(List.of(), page, size, 0, false);
         }
 
-        return postRepository.findByTheme_IdIn(subscribedThemeIds, Sort.by(direction, "createdAt")).stream()
+        Pageable pageable = PageRequest.of(page, size, Sort.by(direction, "createdAt"));
+        Page<Post> result = postRepository.findByTheme_IdIn(subscribedThemeIds, pageable);
+        List<PostResponse> content = result.getContent().stream()
                 .map(PostService::toResponse)
                 .toList();
+
+        return new PostPageResponse(content, page, size, result.getTotalElements(), result.hasNext());
     }
 
     /**

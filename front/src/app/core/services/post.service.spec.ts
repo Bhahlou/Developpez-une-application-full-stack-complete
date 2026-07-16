@@ -5,7 +5,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { firstValueFrom } from 'rxjs';
 import { PostService } from './post.service';
 import { environment } from '../../../environments/environment';
-import { PostResponse } from '../models';
+import { PostPageResponse, PostResponse } from '../models';
 
 describe('PostService', () => {
   let service: PostService;
@@ -24,26 +24,34 @@ describe('PostService', () => {
     httpTesting.verify();
   });
 
-  it('getFeed issues a GET request with the sort param and returns the posts', async () => {
-    const posts: PostResponse[] = [
-      {
-        id: 1,
-        title: 'Title',
-        content: 'Content',
-        themeId: 2,
-        themeTitle: 'Backend',
-        authorUsername: 'johndoe',
-        createdAt: '2026-01-01T00:00:00Z',
-      },
-    ];
-    const promise = firstValueFrom(service.getFeed('desc'));
+  it('getFeed issues a GET request with the sort, page and size params and returns the page', async () => {
+    const page: PostPageResponse = {
+      content: [
+        {
+          id: 1,
+          title: 'Title',
+          content: 'Content',
+          themeId: 2,
+          themeTitle: 'Backend',
+          authorUsername: 'johndoe',
+          createdAt: '2026-01-01T00:00:00Z',
+        },
+      ],
+      page: 0,
+      size: 10,
+      totalElements: 1,
+      hasNext: false,
+    };
+    const promise = firstValueFrom(service.getFeed('desc', 0, 10));
 
     const req = httpTesting.expectOne((request) => request.url === apiUrl);
     expect(req.request.method).toBe('GET');
     expect(req.request.params.get('sort')).toBe('desc');
-    req.flush(posts);
+    expect(req.request.params.get('page')).toBe('0');
+    expect(req.request.params.get('size')).toBe('10');
+    req.flush(page);
 
-    await expect(promise).resolves.toEqual(posts);
+    await expect(promise).resolves.toEqual(page);
   });
 
   it('getById issues a GET request and returns the post', async () => {
